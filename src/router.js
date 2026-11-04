@@ -4,6 +4,7 @@
 import { createRouter } from 'sv-router'
 import InicioPagina from './paginas/InicioPagina.svelte'
 import LoginPagina from './paginas/LoginPagina.svelte'
+import CanalesPagina from './paginas/CanalesPagina.svelte'
 
 // navigate se usa para redirigir por código (tras el login, ante un 401, etc.).
 // '/' y '/inicio' muestran la misma bienvenida: /inicio es la ruta del
@@ -11,5 +12,6 @@ import LoginPagina from './paginas/LoginPagina.svelte'
 export const { navigate } = createRouter({
   '/': InicioPagina,
   '/inicio': InicioPagina,
-  '/login': LoginPagina
+  '/login': LoginPagina,
+  '/canales': CanalesPagina
 })
