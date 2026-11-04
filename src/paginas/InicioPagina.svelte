@@ -26,14 +26,8 @@
 </div>
 
 <style>
-  .pagina h1 {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-  }
-
   .intro {
-    color: #71717a;
-    font-size: 0.9375rem;
-    max-width: 60ch;
+    color: var(--color-texto-suave);
+    font-size: 0.875rem;
   }
 </style>

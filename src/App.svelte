@@ -5,6 +5,8 @@
   import { sesion, cerrarSesion } from './sesion.svelte.js'
   import { navegacion } from './navegacion.svelte.js'
   import { logout, usuarioActual } from './api/sesion.api.js'
+  import Icono from './componentes/comunes/Icono.svelte'
+  import Spinner from './componentes/comunes/Spinner.svelte'
 
   // Al abrir la app con un token guardado lo validamos UNA vez (GET /api/user)
   // antes de mostrar cualquier página, para no operar con un token vencido.
@@ -67,6 +69,7 @@
 
 {#if verificando}
   <div class="cargando-inicial">
+    <Spinner />
     <p>Verificando sesión…</p>
   </div>
 {:else if sesion.token}
@@ -81,6 +84,7 @@
       <nav aria-label="Principal">
         <p class="grupo">Administración</p>
         <a href="/inicio" class:activa={navegacion.seccion === '/inicio'}>
+          <Icono nombre="inicio" />
           <span>Inicio</span>
         </a>
       </nav>
@@ -90,6 +94,7 @@
           <span class="nombre">{sesion.usuario?.name}</span>
         </div>
         <button type="button" class="salir" onclick={salir}>
+          <Icono nombre="salir" />
           <span>Salir</span>
         </button>
       </div>
@@ -104,7 +109,7 @@
           aria-expanded={menuLateralAbierto}
           onclick={abrirMenuLateral}
         >
-          ☰
+          <Icono nombre="menu" />
         </button>
         <span class="seccion-actual">{nombreSeccion}</span>
       </header>
@@ -130,12 +135,12 @@
     left: 1rem;
     top: 1rem;
     z-index: 50;
-    background: #ffffff;
-    border: 1px solid #e4e4e7;
-    border-radius: 6px;
-    box-shadow: 0 1px 2px rgb(9 9 9 / 0.05);
+    background: var(--color-panel);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-boton);
+    box-shadow: var(--sombra);
     padding: 0.5rem 1rem;
-    color: #18181b;
+    color: var(--color-texto);
     text-decoration: none;
     font-size: 0.875rem;
   }
@@ -147,7 +152,7 @@
     gap: 1rem;
     align-items: center;
     justify-content: center;
-    color: #71717a;
+    color: var(--color-texto-suave);
   }
 
   /* ── Layout dashboard: sidebar fija + contenido ── */
@@ -160,20 +165,20 @@
     inset-block: 0;
     left: 0;
     width: 320px;
-    background: #ffffff;
-    border-right: 1px solid #e4e4e7;
+    background: var(--color-panel);
+    border-right: 1px solid var(--color-borde);
     display: flex;
     flex-direction: column;
     gap: 1rem;
     padding: 1rem 0.75rem;
     z-index: 40;
     transform: translateX(-100%);
-    transition: transform 150ms;
+    transition: transform var(--transicion);
   }
 
   .lateral.abierta {
     transform: translateX(0);
-    box-shadow: 0 1px 2px rgb(9 9 9 / 0.05);
+    box-shadow: var(--sombra);
   }
 
   .velo {
@@ -203,7 +208,7 @@
     overflow-y: auto;
   }
 
-  /* Encabezado de grupo de navegación */
+  /* Encabezado de grupo de navegación, como en la sidebar de referencia */
   .grupo {
     margin: 0 0 6px;
     padding: 0 0.75rem;
@@ -211,7 +216,7 @@
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: #71717a;
+    color: var(--color-texto-suave);
   }
 
   nav a {
@@ -219,35 +224,35 @@
     align-items: center;
     gap: 0.65rem;
     padding: 0.5rem 0.75rem;
-    border-radius: 6px;
-    color: #52525b;
+    border-radius: var(--radio-boton);
+    color: var(--color-texto-medio);
     font-size: 0.875rem;
     font-weight: 500;
     text-decoration: none;
     transition:
-      background-color 150ms,
-      color 150ms;
+      background-color var(--transicion),
+      color var(--transicion);
   }
 
   nav a:hover {
-    background: #f4f4f5;
-    color: #18181b;
+    background: var(--color-gris-100);
+    color: var(--color-texto);
   }
 
-  /* Ítem activo: fondo suave + texto primario */
+  /* Ítem activo: fondo suave + texto primary, como la sidebar del sistema */
   nav a.activa {
-    background: #eff6ff;
-    color: #2563eb;
+    background: var(--color-primario-suave);
+    color: var(--color-primario-hover);
     font-weight: 600;
   }
 
   nav a:focus-visible {
-    outline: 2px solid #3b82f6;
+    outline: 2px solid var(--color-primario);
     outline-offset: 1px;
   }
 
   .pie {
-    border-top: 1px solid #e4e4e7;
+    border-top: 1px solid var(--color-borde);
     padding-top: 0.75rem;
     display: flex;
     flex-direction: column;
@@ -267,8 +272,8 @@
     height: 2rem;
     flex-shrink: 0;
     border-radius: 999px;
-    background: #eff6ff;
-    color: #2563eb;
+    background: var(--color-primario-suave);
+    color: var(--color-primario-hover);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -290,25 +295,25 @@
     gap: 0.65rem;
     padding: 0.5rem 0.75rem;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radio-boton);
     background: transparent;
-    color: #52525b;
+    color: var(--color-texto-medio);
     font: inherit;
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
     transition:
-      background-color 150ms,
-      color 150ms;
+      background-color var(--transicion),
+      color var(--transicion);
   }
 
   .salir:hover {
-    background: #f4f4f5;
-    color: #18181b;
+    background: var(--color-gris-100);
+    color: var(--color-texto);
   }
 
   .salir:focus-visible {
-    outline: 2px solid #3b82f6;
+    outline: 2px solid var(--color-primario);
     outline-offset: 1px;
   }
 
@@ -325,8 +330,8 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background: #ffffff;
-    border-bottom: 1px solid #e4e4e7;
+    background: var(--color-panel);
+    border-bottom: 1px solid var(--color-borde);
     padding: 0.55rem 1rem;
   }
 
@@ -337,23 +342,22 @@
     width: 2.25rem;
     height: 2.25rem;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radio-boton);
     background: transparent;
-    color: #52525b;
-    font-size: 1.125rem;
+    color: var(--color-texto-medio);
     cursor: pointer;
     transition:
-      background-color 150ms,
-      color 150ms;
+      background-color var(--transicion),
+      color var(--transicion);
   }
 
   .hamburguesa:hover {
-    background: #f4f4f5;
-    color: #18181b;
+    background: var(--color-gris-100);
+    color: var(--color-texto);
   }
 
   .hamburguesa:focus-visible {
-    outline: 2px solid #3b82f6;
+    outline: 2px solid var(--color-primario);
     outline-offset: 2px;
   }
 
