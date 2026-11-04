@@ -3,11 +3,13 @@
 // Las páginas son las ÚNICAS componentes que se registran acá.
 import { createRouter } from 'sv-router'
 import InicioPagina from './paginas/InicioPagina.svelte'
+import LoginPagina from './paginas/LoginPagina.svelte'
 
 // navigate se usa para redirigir por código (tras el login, ante un 401, etc.).
-// '/' y '/inicio' muestran la misma bienvenida: /inicio será la ruta del
-// enunciado (a donde redirige el login) y '/' es lo que se escribe al abrir.
+// '/' y '/inicio' muestran la misma bienvenida: /inicio es la ruta del
+// enunciado (es a donde redirige el login) y '/' es lo que se escribe al abrir.
 export const { navigate } = createRouter({
   '/': InicioPagina,
-  '/inicio': InicioPagina
+  '/inicio': InicioPagina,
+  '/login': LoginPagina
 })
