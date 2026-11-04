@@ -27,6 +27,7 @@
 
   // Título de la topbar según la sección anunciada por cada página.
   const nombreSeccion = $derived.by(() => {
+    if (navegacion.seccion === '/canales') return 'Canales'
     if (navegacion.seccion === '/login') return 'Iniciar sesión'
     return 'Inicio'
   })
@@ -86,6 +87,10 @@
         <a href="/inicio" class:activa={navegacion.seccion === '/inicio'}>
           <Icono nombre="inicio" />
           <span>Inicio</span>
+        </a>
+        <a href="/canales" class:activa={navegacion.seccion === '/canales'}>
+          <Icono nombre="canales" />
+          <span>Canales</span>
         </a>
       </nav>
       <div class="pie">
