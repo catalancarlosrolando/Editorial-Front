@@ -6,6 +6,7 @@
   import Spinner from '../componentes/comunes/Spinner.svelte'
   import MensajeError from '../componentes/comunes/MensajeError.svelte'
   import Vacio from '../componentes/comunes/Vacio.svelte'
+  import DispositivoForm from '../componentes/dispositivos/DispositivoForm.svelte'
   import DispositivosListado from '../componentes/dispositivos/DispositivosListado.svelte'
   import DispositivosPaginado from '../componentes/dispositivos/DispositivosPaginado.svelte'
 
@@ -28,6 +29,10 @@
     dispositivos.cargar(dispositivos.paginaActual + 1)
   }
 
+  async function guardar(datos) {
+    await dispositivos.agregar(datos)
+  }
+
   function reintentar() {
     dispositivos.cargar()
   }
@@ -42,6 +47,8 @@
     <h1>Dispositivos</h1>
   </div>
 
+  <DispositivoForm guardando={dispositivos.guardando} onGuardar={guardar} />
+
   {#if dispositivos.cargando}
     <div class="centrado">
       <Spinner />
@@ -49,9 +56,13 @@
   {:else if dispositivos.error}
     <MensajeError mensaje={dispositivos.error} onReintentar={reintentar} />
   {:else if dispositivos.items.length === 0}
-    <Vacio mensaje="No hay dispositivos registrados." />
+    <Vacio mensaje="No hay dispositivos registrados. Creá el primero con el formulario de arriba." />
   {:else}
-    <DispositivosListado items={dispositivos.items} />
+    <DispositivosListado
+      items={dispositivos.items}
+      eliminandoId={dispositivos.eliminandoId}
+      onQuitar={dispositivos.quitar}
+    />
     <DispositivosPaginado
       paginaActual={dispositivos.paginaActual}
       ultimaPagina={dispositivos.ultimaPagina}
