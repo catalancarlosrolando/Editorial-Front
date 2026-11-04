@@ -1,10 +1,12 @@
 <script>
   import { navigate } from '../router.js'
   import { sesion, iniciarSesion } from '../sesion.svelte.js'
+  import { navegacion } from '../navegacion.svelte.js'
   import { login } from '../api/sesion.api.js'
 
   // Esta página es pública: si ya hay sesión, directito al inicio.
   $effect(() => {
+    navegacion.seccion = '/login'
     if (sesion.token) {
       navigate('/inicio')
     }
