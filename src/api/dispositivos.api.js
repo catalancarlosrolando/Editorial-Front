@@ -1,4 +1,4 @@
-// Capa de acceso a la API para dispositivos.
+// Capa de acceso a la API para dispositivos: crear, listar PAGINADO y eliminar.
 // A diferencia de canales, NO existe edición (no hay PUT para este modelo).
 // Esta capa no sabe nada de la UI: solo fetch, el envelope del backend y
 // la convención de errores (401 → SESION_INVALIDA, 422 → errores por campo).
@@ -18,4 +18,35 @@ export async function listar(token, pagina = 1) {
   if (!res.ok) throw new Error('HTTP ' + res.status)
   const cuerpo = await res.json()
   return cuerpo.data
+}
+
+// Crear (201). Solo envía { is_active }: el uid lo genera el backend (RN-D01).
+export async function crear(token, datos) {
+  const res = await fetch(`${BASE_URL}/admin/devices`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify(datos)
+  })
+  if (res.status === 401) throw new Error('SESION_INVALIDA')
+  const cuerpo = await res.json()
+  if (res.status === 422) return { errores: cuerpo.errors }
+  if (!res.ok) throw new Error('HTTP ' + res.status)
+  return { dispositivo: cuerpo.data }
+}
+
+// Eliminar. No hay PUT: este modelo no se edita.
+export async function eliminar(token, id) {
+  const res = await fetch(`${BASE_URL}/admin/devices/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer ' + token
+    }
+  })
+  if (res.status === 401) throw new Error('SESION_INVALIDA')
+  if (!res.ok) throw new Error('HTTP ' + res.status)
 }
