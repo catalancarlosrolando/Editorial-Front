@@ -2,7 +2,7 @@
   import { navigate } from '../router.js'
   import { sesion } from '../sesion.svelte.js'
   import { navegacion } from '../navegacion.svelte.js'
-  import { useCanales } from '../useCanales.svelte.js'
+  import { useCanales } from '../hooks/useCanales.svelte.js'
   import Boton from '../componentes/comunes/Boton.svelte'
   import Spinner from '../componentes/comunes/Spinner.svelte'
   import MensajeError from '../componentes/comunes/MensajeError.svelte'
