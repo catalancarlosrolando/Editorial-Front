@@ -29,6 +29,7 @@
   const nombreSeccion = $derived.by(() => {
     if (navegacion.seccion === '/canales') return 'Canales'
     if (navegacion.seccion === '/dispositivos') return 'Dispositivos'
+    if (navegacion.seccion === '/medios') return 'Medios'
     if (navegacion.seccion === '/login') return 'Iniciar sesión'
     return 'Inicio'
   })
@@ -96,6 +97,10 @@
         <a href="/dispositivos" class:activa={navegacion.seccion === '/dispositivos'}>
           <Icono nombre="dispositivos" />
           <span>Dispositivos</span>
+        </a>
+        <a href="/medios" class:activa={navegacion.seccion === '/medios'}>
+          <Icono nombre="medios" />
+          <span>Medios</span>
         </a>
       </nav>
       <div class="pie">
