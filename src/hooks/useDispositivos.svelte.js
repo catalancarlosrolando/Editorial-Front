@@ -1,9 +1,9 @@
 // Hook useDispositivos: estado de la página de dispositivos (listado PAGINADO)
 // y llamadas a la capa api. Sin edición: crear y eliminar alcanzan.
-import { listar, crear, eliminar } from './api/dispositivos.api.js'
-import { sesion, cerrarSesion } from './sesion.svelte.js'
-import { navigate } from './router.js'
-import { mensajeDeError } from './errores.js'
+import { listar, crear, eliminar } from '../api/dispositivos.api.js'
+import { sesion, cerrarSesion } from '../sesion.svelte.js'
+import { navigate } from '../router.js'
+import { mensajeDeError } from '../errores.js'
 
 export function useDispositivos() {
   let items = $state([])

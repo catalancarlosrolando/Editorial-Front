@@ -2,10 +2,10 @@
 // api. Patrón del apunte: useAlgo() crea $state y devuelve estado + funciones.
 // El estado se devuelve con GETTERS para que la página vea siempre el valor
 // actual (si se copiara el array, la vista dejaría de ser reactiva).
-import { listar, tipos, crear, actualizar, eliminar } from './api/canales.api.js'
-import { sesion, cerrarSesion } from './sesion.svelte.js'
-import { navigate } from './router.js'
-import { mensajeDeError } from './errores.js'
+import { listar, tipos, crear, actualizar, eliminar } from '../api/canales.api.js'
+import { sesion, cerrarSesion } from '../sesion.svelte.js'
+import { navigate } from '../router.js'
+import { mensajeDeError } from '../errores.js'
 
 export function useCanales() {
   let items = $state([])
