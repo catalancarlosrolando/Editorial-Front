@@ -2,7 +2,7 @@
   import { navigate } from '../router.js'
   import { sesion } from '../sesion.svelte.js'
   import { navegacion } from '../navegacion.svelte.js'
-  import { useDispositivos } from '../useDispositivos.svelte.js'
+  import { useDispositivos } from '../hooks/useDispositivos.svelte.js'
   import Spinner from '../componentes/comunes/Spinner.svelte'
   import MensajeError from '../componentes/comunes/MensajeError.svelte'
   import Vacio from '../componentes/comunes/Vacio.svelte'

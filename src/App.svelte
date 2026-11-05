@@ -30,6 +30,8 @@
     if (navegacion.seccion === '/canales') return 'Canales'
     if (navegacion.seccion === '/dispositivos') return 'Dispositivos'
     if (navegacion.seccion === '/medios') return 'Medios'
+    if (navegacion.seccion === '/asignar-medios') return 'Asignar medios'
+    if (navegacion.seccion === '/asignar-canales') return 'Asignar canales'
     if (navegacion.seccion === '/login') return 'Iniciar sesión'
     return 'Inicio'
   })
@@ -101,6 +103,15 @@
         <a href="/medios" class:activa={navegacion.seccion === '/medios'}>
           <Icono nombre="medios" />
           <span>Medios</span>
+        </a>
+        <p class="grupo">Asignaciones</p>
+        <a href="/asignar-medios" class:activa={navegacion.seccion === '/asignar-medios'}>
+          <Icono nombre="medios" />
+          <span>Asignar medios</span>
+        </a>
+        <a href="/asignar-canales" class:activa={navegacion.seccion === '/asignar-canales'}>
+          <Icono nombre="canales" />
+          <span>Asignar canales</span>
         </a>
       </nav>
       <div class="pie">

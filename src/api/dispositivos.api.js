@@ -50,3 +50,19 @@ export async function eliminar(token, id) {
   if (res.status === 401) throw new Error('SESION_INVALIDA')
   if (!res.ok) throw new Error('HTTP ' + res.status)
 }
+
+// Trae TODAS las páginas juntas, recorriéndolas una a una (el backend pagina
+// a 10 fijas y no ofrece un listado completo). Se usa para el <select> de
+// /asignar-canales, donde el usuario tiene que poder elegir cualquier
+// dispositivo, no solo los de la primera página. Reutiliza listar() de arriba.
+export async function listarTodos(token) {
+  const dispositivos = []
+  let pagina = 1
+  while (true) {
+    const resultado = await listar(token, pagina)
+    dispositivos.push(...resultado.data)
+    if (resultado.current_page >= resultado.last_page) break
+    pagina++
+  }
+  return dispositivos
+}
