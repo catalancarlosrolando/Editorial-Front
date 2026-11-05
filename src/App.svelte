@@ -7,6 +7,7 @@
   import { logout, usuarioActual } from './api/sesion.api.js'
   import Icono from './componentes/comunes/Icono.svelte'
   import Spinner from './componentes/comunes/Spinner.svelte'
+  import CampanaNotificaciones from './componentes/comunes/CampanaNotificaciones.svelte'
 
   // Al abrir la app con un token guardado lo validamos UNA vez (GET /api/user)
   // antes de mostrar cualquier página, para no operar con un token vencido.
@@ -32,6 +33,7 @@
     if (navegacion.seccion === '/medios') return 'Medios'
     if (navegacion.seccion === '/asignar-medios') return 'Asignar medios'
     if (navegacion.seccion === '/asignar-canales') return 'Asignar canales'
+    if (navegacion.seccion === '/notificaciones') return 'Notificaciones'
     if (navegacion.seccion === '/login') return 'Iniciar sesión'
     return 'Inicio'
   })
@@ -138,6 +140,7 @@
           <Icono nombre="menu" />
         </button>
         <span class="seccion-actual">{nombreSeccion}</span>
+        <CampanaNotificaciones />
       </header>
       <main id="contenido">
         <Router />
