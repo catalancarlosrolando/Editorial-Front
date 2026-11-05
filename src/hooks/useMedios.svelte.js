@@ -1,9 +1,9 @@
 // Hook useMedios: estado de la página de medios (SOLO lectura).
 // No hay crear/editar/eliminar: cargar() lista, opcionalmente con filtros.
-import { listar, tipos } from './api/medios.api.js'
-import { sesion, cerrarSesion } from './sesion.svelte.js'
-import { navigate } from './router.js'
-import { mensajeDeError } from './errores.js'
+import { listar, tipos } from '../api/medios.api.js'
+import { sesion, cerrarSesion } from '../sesion.svelte.js'
+import { navigate } from '../router.js'
+import { mensajeDeError } from '../errores.js'
 
 export function useMedios() {
   let items = $state([])
