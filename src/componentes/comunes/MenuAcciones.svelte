@@ -50,29 +50,30 @@
   })
 </script>
 
-<div class="menu">
-  <button
-    type="button"
-    class="disparador"
-    aria-haspopup="menu"
-    aria-expanded={abierto}
-    aria-label={etiqueta}
-    disabled={deshabilitado}
-    onclick={alternar}
-  >
-    <Icono nombre="puntos" />
-  </button>
-
-  {#if abierto}
-    <!-- Velo invisible: cualquier click afuera cierra el menú -->
+{#if items.length > 0}
+  <div class="menu">
     <button
       type="button"
-      class="velo-menu"
-      aria-label="Cerrar menú"
-      onclick={() => (abierto = false)}
-    ></button>
-    <div
-      class="panel"
+      class="disparador"
+      aria-haspopup="menu"
+      aria-expanded={abierto}
+      aria-label={etiqueta}
+      disabled={deshabilitado}
+      onclick={alternar}
+    >
+      <Icono nombre="puntos" />
+    </button>
+
+    {#if abierto}
+      <!-- Velo invisible: cualquier click afuera cierra el menú -->
+      <button
+        type="button"
+        class="velo-menu"
+        aria-label="Cerrar menú"
+        onclick={() => (abierto = false)}
+      ></button>
+      <div
+        class="panel"
       role="menu"
       style="top: {coordenadas.arriba}; bottom: {coordenadas.abajo}; right: {coordenadas.derecha};"
     >
@@ -91,6 +92,7 @@
     </div>
   {/if}
 </div>
+{/if}
 
 <style>
   .menu {
