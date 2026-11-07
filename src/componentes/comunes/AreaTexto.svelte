@@ -7,18 +7,20 @@
     errores = [],
     filas = 3,
     longitudMaxima = null,
-    placeholder = ''
+    placeholder = '',
+    requerido = false
   } = $props()
 </script>
 
 <div class="campo">
-  <label for={id}>{etiqueta}</label>
+  <label for={id}>{etiqueta}{#if requerido}<span class="asterisco"> *</span>{/if}</label>
   <textarea
     id={id}
     rows={filas}
     bind:value={valor}
     placeholder={placeholder}
     maxlength={longitudMaxima}
+    required={requerido}
     class:invalido={errores.length > 0}
   ></textarea>
   {#each errores as mensaje (mensaje)}
@@ -36,6 +38,10 @@
   label {
     font-size: 0.875rem;
     font-weight: 600;
+  }
+
+  .asterisco {
+    color: var(--color-peligro);
   }
 
   textarea {

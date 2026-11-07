@@ -1,17 +1,20 @@
 <script>
   import Icono from '../comunes/Icono.svelte'
   import EstadoBadge from '../comunes/EstadoBadge.svelte'
+  import MenuAcciones from '../comunes/MenuAcciones.svelte'
   import DetallePublicacion from './DetallePublicacion.svelte'
   import { etiquetaEstado, etiquetaTipo } from './estados-publicacion.js'
 
-  // Una fila del listado de publicaciones (etapa D). A diferencia de las
-  // otras tablas, acá no hay menú de acciones (llegan en las etapas E/F):
-  // la interacción de esta etapa es el DETALLE EXPANDIBLE — un botón chevron
-  // por fila que avisa onAlternar(post) hacia arriba, y debajo del renglón
-  // se agrega una segunda <tr> que ocupa las 6 columnas con el detalle.
+  // Una fila del listado de publicaciones (etapas D y E). La interacción de
+  // la etapa D es el DETALLE EXPANDIBLE — un botón chevron por fila que
+  // avisa onAlternar(post) hacia arriba, y debajo del renglón se agrega una
+  // segunda <tr> que ocupa las 7 columnas con el detalle. En la etapa E se
+  // suma el menú de acciones con Editar, que la página solo ofrece cuando
+  // corresponde (dueño + draft, RN-P03): si el backend dijera que no, el
+  // formulario mostraría su error.
   // El componente renderiza DOS filas de tabla: por eso no tiene un único
   // elemento raíz.
-  let { post, detalle, cargandoDetalle, errorDetalle, onAlternar } = $props()
+  let { post, detalle, cargandoDetalle, errorDetalle, onAlternar, onEditar, esEditable } = $props()
 
   // ¿Esta fila es la que tiene el detalle abierto?
   const expandido = $derived(detalle?.resumen?.id === post.id)
@@ -76,11 +79,26 @@
       {/if}
     </span>
   </td>
+  <td>
+    <span class="celda-etiqueta">Acciones</span>
+    <MenuAcciones
+      etiqueta="Acciones de la publicación"
+      items={esEditable(post)
+        ? [
+            {
+              etiqueta: 'Editar',
+              icono: 'editar',
+              alElegir: () => onEditar(post)
+            }
+          ]
+        : []}
+    />
+  </td>
 </tr>
 
 {#if expandido}
   <tr class="fila-detalle">
-    <td colspan="6">
+    <td colspan="7">
       <DetallePublicacion
         resumen={detalle.resumen}
         datos={detalle.datos}
