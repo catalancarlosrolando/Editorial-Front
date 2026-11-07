@@ -10,6 +10,8 @@ import MediosPagina from './paginas/MediosPagina.svelte'
 import AsignarMediosPagina from './paginas/AsignarMediosPagina.svelte'
 import AsignarCanalesPagina from './paginas/AsignarCanalesPagina.svelte'
 import NotificacionesPagina from './paginas/NotificacionesPagina.svelte'
+import UsuariosPagina from './paginas/UsuariosPagina.svelte'
+import PublicadoresPagina from './paginas/PublicadoresPagina.svelte'
 
 // navigate se usa para redirigir por código (tras el login, ante un 401, etc.).
 // '/' y '/inicio' muestran la misma bienvenida: /inicio es la ruta del
@@ -23,5 +25,7 @@ export const { navigate } = createRouter({
   '/medios': MediosPagina,
   '/asignar-medios': AsignarMediosPagina,
   '/asignar-canales': AsignarCanalesPagina,
-  '/notificaciones': NotificacionesPagina
+  '/notificaciones': NotificacionesPagina,
+  '/usuarios': UsuariosPagina,
+  '/publicadores': PublicadoresPagina
 })

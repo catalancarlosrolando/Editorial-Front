@@ -8,7 +8,9 @@
   import Vacio from '../componentes/comunes/Vacio.svelte'
   import DispositivoForm from '../componentes/dispositivos/DispositivoForm.svelte'
   import DispositivosListado from '../componentes/dispositivos/DispositivosListado.svelte'
-  import DispositivosPaginado from '../componentes/dispositivos/DispositivosPaginado.svelte'
+  // refactor (etapa C): el paginado propio de dispositivos se extrajo a
+  // componentes/comunes/Paginador.svelte, que ahora también usa /usuarios.
+  import Paginador from '../componentes/comunes/Paginador.svelte'
 
   const dispositivos = useDispositivos()
 
@@ -21,12 +23,8 @@
     dispositivos.cargar()
   })
 
-  function paginaAnterior() {
-    dispositivos.cargar(dispositivos.paginaActual - 1)
-  }
-
-  function paginaSiguiente() {
-    dispositivos.cargar(dispositivos.paginaActual + 1)
+  function cambiarPagina(pagina) {
+    dispositivos.cargar(pagina)
   }
 
   async function guardar(datos) {
@@ -63,13 +61,12 @@
       eliminandoId={dispositivos.eliminandoId}
       onQuitar={dispositivos.quitar}
     />
-    <DispositivosPaginado
-      paginaActual={dispositivos.paginaActual}
+    <Paginador
+      pagina={dispositivos.paginaActual}
       ultimaPagina={dispositivos.ultimaPagina}
       total={dispositivos.total}
       cargando={dispositivos.cargando}
-      onAnterior={paginaAnterior}
-      onSiguiente={paginaSiguiente}
+      onCambiar={cambiarPagina}
     />
   {/if}
 </div>

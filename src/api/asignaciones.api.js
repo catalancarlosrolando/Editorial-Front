@@ -1,6 +1,7 @@
-// Capa de acceso a la API para las RELACIONES N:M de la etapa A:
-//   canal ↔ medios  →  /admin/channels/{id}/medias
-//   dispositivo ↔ canales  →  /admin/device-channels/{device}
+// Capa de acceso a la API para las RELACIONES N:M:
+//   canal ↔ medios  →  /admin/channels/{id}/medias          (etapa A)
+//   dispositivo ↔ canales  →  /admin/device-channels/{device}  (etapa A)
+//   usuario ↔ canales  →  /admin/user-channels/{user}       (etapa C)
 // Esta capa no sabe nada de la UI: solo fetch, el envelope del backend y
 // la convención de errores (401 → SESION_INVALIDA, 422 → errores por campo).
 import { BASE_URL } from '../config.js'
@@ -89,6 +90,58 @@ export function asignarCanales(token, dispositivoId, idsCanales) {
 // Desasociar canales de un dispositivo.
 export function desasignarCanales(token, dispositivoId, idsCanales) {
   return enviarLista('DELETE', `${BASE_URL}/admin/device-channels/${dispositivoId}`, token, {
+    channel_ids: idsCanales
+  })
+}
+
+// ── Usuario ↔ canales (etapa C) ──
+
+// Publicadores con sus canales: GET /admin/user-channels/publishers, PAGINADO
+// a 7 por página (forma estándar de Laravel: data.data + current_page/...).
+export async function listarPublishers(token, pagina = 1) {
+  const res = await fetch(`${BASE_URL}/admin/user-channels/publishers?page=${pagina}`, {
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer ' + token
+    }
+  })
+  if (res.status === 401) throw new Error('SESION_INVALIDA')
+  if (!res.ok) throw new Error('HTTP ' + res.status)
+  const cuerpo = await res.json()
+  return cuerpo.data
+}
+
+// Trae TODAS las páginas (a 7 fijas) recorriéndolas una a una. Se usa para el
+// <select> de /publicadores: hay que poder elegir cualquier publicador, no
+// solo los de la primera página. Mismo patrón que dispositivos.listarTodos().
+export async function listarPublishersTodos(token) {
+  const publicadores = []
+  let pagina = 1
+  while (true) {
+    const resultado = await listarPublishers(token, pagina)
+    publicadores.push(...(Array.isArray(resultado.data) ? resultado.data : []))
+    if ((resultado.current_page ?? 1) >= (resultado.last_page ?? 1)) break
+    pagina++
+  }
+  return publicadores
+}
+
+// Canales asignados a un publicador: data = { user: {...}, channels: [...] }
+// (misma forma dueño + lista que device-channels, la lección de la etapa A).
+export function canalesDeUsuario(token, usuarioId) {
+  return traerAsociados(`${BASE_URL}/admin/user-channels/${usuarioId}`, token, 'channels')
+}
+
+// Asignar canales a un publicador (agrega los enviados).
+export function asignarCanalesAUsuario(token, usuarioId, idsCanales) {
+  return enviarLista('POST', `${BASE_URL}/admin/user-channels/${usuarioId}`, token, {
+    channel_ids: idsCanales
+  })
+}
+
+// Revocar canales de un publicador (quita SOLO los ids enviados).
+export function revocarCanalesDeUsuario(token, usuarioId, idsCanales) {
+  return enviarLista('DELETE', `${BASE_URL}/admin/user-channels/${usuarioId}`, token, {
     channel_ids: idsCanales
   })
 }
