@@ -32,6 +32,15 @@ export function iniciarSesion(datos) {
   localStorage.setItem(CLAVE_USUARIO, JSON.stringify(datos.user))
 }
 
+// ¿El usuario logueado tiene este permiso? (p. ej. 'editar-contenido').
+// Los permisos llegan del backend dentro de usuario.permissions en el login.
+// Sin sesión (o sin lista de permisos) responde false: así la UI puede
+// ocultar enlaces y las páginas bloquearse ANTES de intentar un fetch que
+// igual terminaría en 403.
+export function tienePermiso(nombre) {
+  return sesion.usuario?.permissions?.includes(nombre) ?? false
+}
+
 // Limpia la sesión en memoria y en localStorage. Se usa al cerrar sesión
 // y también ante cualquier 401 (los hooks llaman a esta misma función).
 export function cerrarSesion() {

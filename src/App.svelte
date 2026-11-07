@@ -2,7 +2,7 @@
   import { Router } from 'sv-router'
   // Importar router.js registra las rutas (createRouter corre al importarlo).
   import { navigate } from './router.js'
-  import { sesion, cerrarSesion } from './sesion.svelte.js'
+  import { sesion, cerrarSesion, tienePermiso } from './sesion.svelte.js'
   import { navegacion } from './navegacion.svelte.js'
   import { logout, usuarioActual } from './api/sesion.api.js'
   import Icono from './componentes/comunes/Icono.svelte'
@@ -36,6 +36,7 @@
     if (navegacion.seccion === '/notificaciones') return 'Notificaciones'
     if (navegacion.seccion === '/usuarios') return 'Usuarios'
     if (navegacion.seccion === '/publicadores') return 'Publicadores'
+    if (navegacion.seccion === '/publicaciones') return 'Publicaciones'
     if (navegacion.seccion === '/login') return 'Iniciar sesión'
     return 'Inicio'
   })
@@ -126,6 +127,13 @@
           <Icono nombre="canales" />
           <span>Publicadores</span>
         </a>
+        {#if tienePermiso('editar-contenido')}
+          <p class="grupo">Contenido</p>
+          <a href="/publicaciones" class:activa={navegacion.seccion === '/publicaciones'}>
+            <Icono nombre="publicaciones" />
+            <span>Publicaciones</span>
+          </a>
+        {/if}
       </nav>
       <div class="pie">
         <div class="usuario">
