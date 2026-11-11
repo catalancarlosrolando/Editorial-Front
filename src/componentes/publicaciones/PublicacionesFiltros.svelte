@@ -1,16 +1,23 @@
 <script>
-  // Filtros del listado de publicaciones (etapa D): el formulario más largo
-  // del proyecto — texto libre, estado, tipo, autor, TRES rangos de fechas
-  // (creado / programado / publicado), adjuntos, orden y tamaño de página.
-  // Mismo contrato que UsuariosFiltros: estado local y callback
-  // onFiltrar(filtros) con TODOS los valores, la capa api decide cuáles viajan
-  // al query string. Enter en un filtro dispara lo mismo que el botón.
+  // Filtros del listado de publicaciones (etapa D): texto libre, estado, tipo,
+  // autor, TRES rangos de fechas (creado / programado / publicado), adjuntos,
+  // orden y tamaño de página. El contrato con la página NO cambia: estado
+  // local y callback onFiltrar(filtros) con TODOS los valores, la capa api
+  // decide cuáles viajan al query string. Solo cambió la UI: el formulario
+  // vive dentro del panel lateral PanelFiltros (botón gatillo + drawer
+  // derecho), agrupado por secciones y con los rangos de fechas de a dos por
+  // fila — es el formulario más largo del proyecto, el panel lo hace
+  // scrolleable sin empujar la tabla.
+  //
+  // El Enter en un texto ahora dispara el submit nativo del <form> del panel,
+  // que llama a aplicarFiltros y cierra: mismo camino que el botón Filtrar,
+  // por eso los FiltroTexto/FiltroFecha ya no necesitan alFiltrar.
   //
   // channel_ids / media_ids NO están en el formulario: para ofrecerlos hace
   // falta un catálogo de canales que la spec no define para todos los roles
   // (RN-P01 deja el endpoint de canales autorizados "a confirmar"). La capa
   // api/ ya los soporta como arrays para cuando la etapa E lo defina.
-  import Boton from '../comunes/Boton.svelte'
+  import PanelFiltros from '../comunes/PanelFiltros.svelte'
   import Seleccion from '../comunes/Seleccion.svelte'
   import FiltroTexto from '../comunes/FiltroTexto.svelte'
   import FiltroFecha from '../comunes/FiltroFecha.svelte'
@@ -54,11 +61,6 @@
     })
   }
 
-  function aplicar(e) {
-    e.preventDefault()
-    aplicarFiltros()
-  }
-
   function limpiar() {
     search = status = type = authorName = ''
     createdFrom = createdTo = ''
@@ -67,16 +69,44 @@
     hasAttachments = sortBy = sortOrder = perPage = ''
     onFiltrar({})
   }
+
+  // El badge del gatillo cuenta cuántos criterios tienen valor (los rangos
+  // cuentan por extremo: desde y hasta son dos criterios independientes).
+  const activos = $derived(
+    [
+      search,
+      status,
+      type,
+      authorName,
+      createdFrom,
+      createdTo,
+      scheduledFrom,
+      scheduledTo,
+      publishedFrom,
+      publishedTo,
+      hasAttachments,
+      sortBy,
+      sortOrder,
+      perPage
+    ].filter((v) => v !== '').length
+  )
 </script>
 
-<form class="tarjeta filtros" onsubmit={aplicar}>
+<PanelFiltros {activos} onAplicar={aplicarFiltros} onLimpiar={limpiar}>
+  <p class="seccion">Búsqueda</p>
   <FiltroTexto
     id="filtro-buscar"
     etiqueta="Buscar"
     bind:valor={search}
     placeholder="Título, contenido o autor…"
-    alFiltrar={aplicarFiltros}
   />
+  <FiltroTexto
+    id="filtro-autor"
+    etiqueta="Autor"
+    bind:valor={authorName}
+    placeholder="Nombre del autor…"
+  />
+  <p class="seccion">Estado</p>
   <Seleccion
     id="filtro-estado"
     etiqueta="Estado"
@@ -85,39 +115,6 @@
     textoVacio="Todos los estados"
   />
   <Seleccion id="filtro-tipo" etiqueta="Tipo" bind:valor={type} opciones={TIPOS_POST} textoVacio="Todos los tipos" />
-  <FiltroTexto
-    id="filtro-autor"
-    etiqueta="Autor"
-    bind:valor={authorName}
-    placeholder="Nombre del autor…"
-    alFiltrar={aplicarFiltros}
-  />
-  <FiltroFecha id="filtro-creado-desde" etiqueta="Creado desde" bind:valor={createdFrom} alFiltrar={aplicarFiltros} />
-  <FiltroFecha id="filtro-creado-hasta" etiqueta="Creado hasta" bind:valor={createdTo} alFiltrar={aplicarFiltros} />
-  <FiltroFecha
-    id="filtro-programado-desde"
-    etiqueta="Programado desde"
-    bind:valor={scheduledFrom}
-    alFiltrar={aplicarFiltros}
-  />
-  <FiltroFecha
-    id="filtro-programado-hasta"
-    etiqueta="Programado hasta"
-    bind:valor={scheduledTo}
-    alFiltrar={aplicarFiltros}
-  />
-  <FiltroFecha
-    id="filtro-publicado-desde"
-    etiqueta="Publicado desde"
-    bind:valor={publishedFrom}
-    alFiltrar={aplicarFiltros}
-  />
-  <FiltroFecha
-    id="filtro-publicado-hasta"
-    etiqueta="Publicado hasta"
-    bind:valor={publishedTo}
-    alFiltrar={aplicarFiltros}
-  />
   <Seleccion
     id="filtro-adjuntos"
     etiqueta="Adjuntos"
@@ -128,6 +125,36 @@
     ]}
     textoVacio="Con o sin adjuntos"
   />
+  <p class="seccion">Fechas</p>
+  <div class="rango">
+    <FiltroFecha id="filtro-creado-desde" etiqueta="Creado desde" bind:valor={createdFrom} />
+    <FiltroFecha id="filtro-creado-hasta" etiqueta="Creado hasta" bind:valor={createdTo} />
+  </div>
+  <div class="rango">
+    <FiltroFecha
+      id="filtro-programado-desde"
+      etiqueta="Programado desde"
+      bind:valor={scheduledFrom}
+    />
+    <FiltroFecha
+      id="filtro-programado-hasta"
+      etiqueta="Programado hasta"
+      bind:valor={scheduledTo}
+    />
+  </div>
+  <div class="rango">
+    <FiltroFecha
+      id="filtro-publicado-desde"
+      etiqueta="Publicado desde"
+      bind:valor={publishedFrom}
+    />
+    <FiltroFecha
+      id="filtro-publicado-hasta"
+      etiqueta="Publicado hasta"
+      bind:valor={publishedTo}
+    />
+  </div>
+  <p class="seccion">Orden</p>
   <Seleccion
     id="filtro-orden"
     etiqueta="Ordenar por"
@@ -149,27 +176,24 @@
     opciones={TAMANIOS_PAGINA}
     textoVacio="20 por página"
   />
-  <div class="acciones">
-    <Boton tipo="submit">Filtrar</Boton>
-    <Boton variante="neutra" onclick={limpiar}>Limpiar</Boton>
-  </div>
-</form>
+</PanelFiltros>
 
 <style>
-  .filtros {
-    display: flex;
-    gap: 1rem;
-    align-items: end;
-    flex-wrap: wrap;
+  /* Rótulos de grupo del panel: la misma idea que el grupo "ADMINISTRACIÓN"
+     de la sidebar (chico, negrita, mayúsculas, gris suave) */
+  .seccion {
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-texto-suave);
   }
 
-  .filtros :global(.campo) {
-    flex: 1;
-    min-width: 11rem;
-  }
-
-  .acciones {
-    display: flex;
+  /* Dentro del panel angosto los pares desde/hasta comparten fila */
+  .rango {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
   }
 </style>
