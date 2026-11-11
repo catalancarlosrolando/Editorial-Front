@@ -1,16 +1,18 @@
 <script>
   // Botón reutilizable. El texto se pasa como snippet children y el click
-  // sube al padre con la callback prop onclick.
+  // sube al padre con la callback prop onclick. Los atributos extra (aria-*,
+  // data-*) viajan en resto y se esparcen sobre el <button>.
   let {
     variante = 'primaria',
     tipo = 'button',
     deshabilitado = false,
     onclick = null,
-    children
+    children,
+    ...resto
   } = $props()
 </script>
 
-<button type={tipo} class={variante} disabled={deshabilitado} {onclick}>
+<button type={tipo} class={variante} disabled={deshabilitado} {onclick} {...resto}>
   {@render children?.()}
 </button>
 

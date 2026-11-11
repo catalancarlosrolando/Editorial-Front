@@ -1,6 +1,6 @@
 <script>
-  import Boton from '../comunes/Boton.svelte'
-  import Seleccion from '../comunes/Seleccion.svelte'
+  import Boton from "../comunes/Boton.svelte";
+  import Seleccion from "../comunes/Seleccion.svelte";
 
   // Panel de roles de un usuario: asignar (cualquier rol de la spec) y revocar
   // (solo los que ya tiene). Solo presentación: los errores del backend llegan
@@ -9,40 +9,42 @@
   let {
     usuario,
     ocupado = false,
-    error = '',
+    error = "",
     errores = [],
     onAsignar,
     onRevocar,
-    onCerrar
-  } = $props()
+    onCerrar,
+  } = $props();
 
   // No hay endpoint de catálogo de roles: los valores vienen de la spec de
   // assign-role (invitado / publicador / moderador / admin).
   const ROLES = [
-    { value: 'invitado', label: 'Invitado' },
-    { value: 'publicador', label: 'Publicador' },
-    { value: 'moderador', label: 'Moderador' },
-    { value: 'admin', label: 'Admin' }
-  ]
+    { value: "invitado", label: "Invitado" },
+    { value: "publicador", label: "Publicador" },
+    { value: "moderador", label: "Moderador" },
+    { value: "admin", label: "Admin" },
+  ];
 
-  let rolAsignar = $state('')
-  let rolRevocar = $state('')
+  let rolAsignar = $state("");
+  let rolRevocar = $state("");
 
   // Opciones del <select> de revocar: SOLO los roles actuales del usuario.
-  const rolesActuales = $derived((usuario.roles ?? []).map((rol) => ({ value: rol, label: rol })))
+  const rolesActuales = $derived(
+    (usuario.roles ?? []).map((rol) => ({ value: rol, label: rol })),
+  );
 
   function asignar(e) {
-    e.preventDefault()
-    if (!rolAsignar) return
-    onAsignar(rolAsignar)
-    rolAsignar = '' // estado del formulario predecible: limpio tras cada intento
+    e.preventDefault();
+    if (!rolAsignar) return;
+    onAsignar(rolAsignar);
+    rolAsignar = ""; // estado del formulario predecible: limpio tras cada intento
   }
 
   function revocar(e) {
-    e.preventDefault()
-    if (!rolRevocar) return
-    onRevocar(rolRevocar)
-    rolRevocar = ''
+    e.preventDefault();
+    if (!rolRevocar) return;
+    onRevocar(rolRevocar);
+    rolRevocar = "";
   }
 </script>
 
@@ -68,7 +70,8 @@
         opciones={ROLES}
         textoVacio="Elegí un rol…"
       />
-      <Boton tipo="submit" deshabilitado={ocupado || !rolAsignar}>Asignar</Boton>
+      <Boton tipo="submit" deshabilitado={ocupado || !rolAsignar}>Asignar</Boton
+      >
     </form>
     <form onsubmit={revocar}>
       <Seleccion
@@ -78,7 +81,11 @@
         opciones={rolesActuales}
         textoVacio="Elegí un rol…"
       />
-      <Boton tipo="submit" variante="peligrosa" deshabilitado={ocupado || !rolRevocar}>Revocar</Boton>
+      <Boton
+        tipo="submit"
+        variante="peligrosa"
+        deshabilitado={ocupado || !rolRevocar}>Revocar</Boton
+      >
     </form>
   </div>
 
