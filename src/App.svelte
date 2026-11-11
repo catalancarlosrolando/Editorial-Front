@@ -2,7 +2,7 @@
   import { Router } from 'sv-router'
   // Importar router.js registra las rutas (createRouter corre al importarlo).
   import { navigate } from './router.js'
-  import { sesion, cerrarSesion, tienePermiso } from './sesion.svelte.js'
+  import { sesion, cerrarSesion, tienePermiso, tieneRol } from './sesion.svelte.js'
   import { navegacion } from './navegacion.svelte.js'
   import { logout, usuarioActual } from './api/sesion.api.js'
   import Icono from './componentes/comunes/Icono.svelte'
@@ -37,6 +37,7 @@
     if (navegacion.seccion === '/usuarios') return 'Usuarios'
     if (navegacion.seccion === '/publicadores') return 'Publicadores'
     if (navegacion.seccion === '/publicaciones') return 'Publicaciones'
+    if (navegacion.seccion === '/moderacion') return 'Moderación'
     if (navegacion.seccion === '/login') return 'Iniciar sesión'
     return 'Inicio'
   })
@@ -133,6 +134,14 @@
             <Icono nombre="publicaciones" />
             <span>Publicaciones</span>
           </a>
+          <!-- Etapa F: la moderación es por ROL (moderador/admin, RN-P13),
+               no por permiso — igual que lo chequea el backend. -->
+          {#if tieneRol('moderador', 'admin')}
+            <a href="/moderacion" class:activa={navegacion.seccion === '/moderacion'}>
+              <Icono nombre="ojo" />
+              <span>Moderación</span>
+            </a>
+          {/if}
         {/if}
       </nav>
       <div class="pie">

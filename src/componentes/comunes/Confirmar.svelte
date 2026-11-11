@@ -2,29 +2,39 @@
   import Boton from './Boton.svelte'
   import AreaTexto from './AreaTexto.svelte'
 
-  // Diálogo de confirmación CON motivo para las acciones que el backend
-  // registra (rechazar, deshabilitar, eliminar, stop…): a diferencia de
-  // window.confirm, acá el usuario puede (o debe, según motivoObligatorio)
-  // escribir un motivo que viaja en onConfirmar(motivo). Los errores del
-  // backend (422/403) llegan por la prop errores y se muestran bajo el campo,
-  // con el diálogo abierto para que se corrija o se cancele.
-  let {
-    titulo,
-    mensaje = '',
-    textoConfirmar = 'Confirmar',
-    peligroso = false,
-    motivoObligatorio = false,
-    ocupado = false,
-    errores = [],
-    onConfirmar,
-    onCancelar
-  } = $props()
+// Diálogo de confirmación CON motivo para las acciones que el backend
+// registra (rechazar, deshabilitar, eliminar, stop…): a diferencia de
+// window.confirm, acá el usuario puede (o debe, según motivoObligatorio)
+// escribir un motivo que viaja en onConfirmar(motivo). Los errores del
+// backend (422/403) llegan por la prop errores y se muestran bajo el campo,
+// con el diálogo abierto para que se corrija o se cancele.
+// Etapa F: `conMotivo = false` lo deja en diálogo de confirmación SECO
+// (solo mensaje + botones) para las acciones que exigen un confirm del
+// backend pero no motivo — el archivado pide {confirm:true} y nada más.
+let {
+  titulo,
+  mensaje = '',
+  textoConfirmar = 'Confirmar',
+  peligroso = false,
+  conMotivo = true,
+  motivoObligatorio = false,
+  ocupado = false,
+  errores = [],
+  onConfirmar,
+  onCancelar
+} = $props()
 
   let motivo = $state('')
   let faltaMotivo = $state(false)
 
   function confirmar(e) {
     e.preventDefault()
+    if (!conMotivo) {
+      // Sin campo de motivo el callback viaja con cadena vacía: la página
+      // que lo usa ya sabe que esta acción no registra motivo.
+      onConfirmar('')
+      return
+    }
     faltaMotivo = motivoObligatorio && motivo.trim() === ''
     if (faltaMotivo) return
     onConfirmar(motivo.trim())
@@ -49,15 +59,20 @@
   <h2>{titulo}</h2>
   {#if mensaje}<p class="mensaje">{mensaje}</p>{/if}
   <form onsubmit={confirmar}>
-    <AreaTexto
-      id="motivo-confirmar"
-      etiqueta={motivoObligatorio ? 'Motivo (obligatorio)' : 'Motivo (opcional)'}
-      bind:valor={motivo}
-      errores={errores}
-      placeholder="Contá el motivo de la operación…"
-    />
-    {#if faltaMotivo}
-      <p class="falta">El motivo es obligatorio para esta acción.</p>
+    {#if conMotivo}
+      <AreaTexto
+        id="motivo-confirmar"
+        etiqueta={motivoObligatorio ? 'Motivo (obligatorio)' : 'Motivo (opcional)'}
+        bind:valor={motivo}
+        errores={errores}
+        placeholder="Contá el motivo de la operación…"
+      />
+      {#if faltaMotivo}
+        <p class="falta">El motivo es obligatorio para esta acción.</p>
+      {/if}
+    {/if}
+    {#if !conMotivo && errores.length}
+      <div class="falta" role="alert">{errores[0]}</div>
     {/if}
     <div class="acciones">
       <Boton variante="neutra" deshabilitado={ocupado} onclick={onCancelar}>Cancelar</Boton>

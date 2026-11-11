@@ -41,6 +41,15 @@ export function tienePermiso(nombre) {
   return sesion.usuario?.permissions?.includes(nombre) ?? false
 }
 
+// ¿El usuario logueado tiene ALGUNO de estos roles? (p. ej. 'moderador',
+// 'admin'). Los roles llegan del backend dentro de usuario.roles en el login.
+// La moderación (etapa F) NO se controla con un permiso sino con el rol: el
+// backend chequea hasRole(['moderador', 'admin']) dentro de cada método, así
+// que la UI replica esa misma condición.
+export function tieneRol(...nombres) {
+  return sesion.usuario?.roles?.some((rol) => nombres.includes(rol)) ?? false
+}
+
 // Limpia la sesión en memoria y en localStorage. Se usa al cerrar sesión
 // y también ante cualquier 401 (los hooks llaman a esta misma función).
 export function cerrarSesion() {

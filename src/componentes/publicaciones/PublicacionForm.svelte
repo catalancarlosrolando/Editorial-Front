@@ -5,6 +5,7 @@
   import Seleccion from '../comunes/Seleccion.svelte'
   import GrupoCasillas from '../comunes/GrupoCasillas.svelte'
   import MensajeError from '../comunes/MensajeError.svelte'
+  import Icono from '../comunes/Icono.svelte'
 
   // Formulario dual de publicación (etapa E): crear (inicial = null) y
   // editar (inicial = la fila del listado, que trae channels y medias
@@ -14,11 +15,13 @@
   // catálogo de medios la hace el hook (con guardia anti-carrera); este
   // componente le avisa con onCanalesCambian cada vez que la selección
   // cambia, y limpia de la selección los medios que quedaron sin canal.
+  // Etapa F: bloque de ADJUNTOS con <input type="file" multiple bind:files>.
   let {
     inicial = null,
     tipos = [],
     canales = [],
     medios = [],
+    adjuntosExistentes = [],
     cargandoCanales = false,
     cargandoMedios = false,
     errorCanales = '',
@@ -48,6 +51,33 @@
   // svelte-ignore state_referenced_locally
   let mediosElegidos = $state((inicial?.medias ?? []).map((m) => m.id))
   let errorFecha = $state('')
+
+  // ── Etapa F: adjuntos ──
+  // `archivos` es el FileList del input (bind:files). La lista se convierte
+  // en array recién al enviar, y se valida acá en el cliente (RN-P05: máx.
+  // 10 archivos × 10 MB por operación, con los mimes de la spec).
+  let archivos = $state(null)
+  let errorAdjuntos = $state('')
+  let inputArchivos = $state(null)
+
+  const MAX_ADJUNTOS = 10
+  const MAX_BYTES = 10 * 1024 * 1024
+  // Mimes de la spec (05-api-endpoints): jpg, jpeg, png, gif, webp, mp4, mov,
+  // avi, webm, mp3, wav, pdf. Se aceptan los dos nombres que sueltan los
+  // navegadores para avi y wav.
+  const MIMES_PERMITIDOS = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+    'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/avi', 'video/webm',
+    'audio/mpeg', 'audio/wav', 'audio/x-wav', 'application/pdf'
+  ]
+  // Si el navegador no reconoce el tipo (file.type vacío) se decide por la
+  // extensión del nombre, que es exactamente la lista del backend.
+  const EXTENSIONES_PERMITIDAS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'avi', 'webm', 'mp3', 'wav', 'pdf']
+  const ACEPTAR =
+    MIMES_PERMITIDOS.join(',') + ',' + EXTENSIONES_PERMITIDAS.map((e) => '.' + e).join(',')
+
+  const archivosElegidos = $derived(archivos ? [...archivos] : [])
+  const adjuntosPrevios = $derived(adjuntosExistentes)
 
   // El <input type="datetime-local"> trabaja con "YYYY-MM-DDTHH:MM" en hora
   // LOCAL; el backend manda ISO con zona. Se convierte ida y vuelta con Date
@@ -83,6 +113,47 @@
     onCanalesCambian([...canalesElegidos])
   }
 
+  // RN-P05 en el cliente: cantidad, tamaño y tipo. Devuelve '' si todo bien,
+  // o el texto del primer problema encontrado (con el nombre del archivo).
+  function validarAdjuntos(lista) {
+    if (lista.length > MAX_ADJUNTOS) {
+      return `Máximo ${MAX_ADJUNTOS} archivos por operación (elegiste ${lista.length}).`
+    }
+    for (const archivo of lista) {
+      if (archivo.size > MAX_BYTES) {
+        return `«${archivo.name}» supera los 10 MB.`
+      }
+      const tipoOk =
+        archivo.type
+          ? MIMES_PERMITIDOS.includes(archivo.type)
+          : EXTENSIONES_PERMITIDAS.includes(archivo.name.split('.').pop().toLowerCase())
+      if (!tipoOk) {
+        return `«${archivo.name}» no es un tipo permitido (imágenes, videos, audios o PDF).`
+      }
+    }
+    return ''
+  }
+
+  // Suelta la selección entera: el FileList no se puede recortar archivo por
+  // archivo, así que el input se limpia por completo (bind:this + value='').
+  function soltarArchivos() {
+    if (inputArchivos) inputArchivos.value = ''
+    archivos = null
+    errorAdjuntos = ''
+  }
+
+  // El backend guarda solo mime_type + path (sin nombre original): para
+  // mostrar los existentes se saca el nombre final del path.
+  function nombreDeAdjunto(path) {
+    return String(path ?? '').split('/').pop()
+  }
+
+  function formatoTamanio(bytes) {
+    if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+    if (bytes >= 1024) return Math.round(bytes / 1024) + ' KB'
+    return bytes + ' B'
+  }
+
   function enviar(e) {
     e.preventDefault()
     errorFecha = ''
@@ -91,14 +162,21 @@
       errorFecha = 'La fecha de programación debe ser posterior a la actual.'
       return
     }
-    onGuardar({
-      name,
-      content,
-      type,
-      scheduled_at: scheduledAt ? aMysql(scheduledAt) : null,
-      channel_ids: canalesElegidos,
-      media_ids: mediosElegidos
-    })
+    // RN-P05: validar los archivos ANTES de salir hacia el hook. Si hay un
+    // problema, el formulario sigue abierto y no viaja ningún byte.
+    errorAdjuntos = validarAdjuntos(archivosElegidos)
+    if (errorAdjuntos) return
+    onGuardar(
+      {
+        name,
+        content,
+        type,
+        scheduled_at: scheduledAt ? aMysql(scheduledAt) : null,
+        channel_ids: canalesElegidos,
+        media_ids: mediosElegidos
+      },
+      archivosElegidos
+    )
   }
 
   const opcionesCanales = $derived(canales.map((c) => ({ id: c.id, etiqueta: c.name })))
@@ -184,6 +262,58 @@
     />
   {/if}
 
+  <!-- Adjuntos (etapa F): bind:files + multiple. En edición se listan los
+       que ya tiene el post y se avisa RN-P04: la edición SOLO agrega. -->
+  <fieldset class="adjuntos" disabled={guardando}>
+    <legend>Adjuntos</legend>
+
+    {#if inicial}
+      <p class="nota">RN-P04: los adjuntos existentes se mantienen; la edición solo puede <strong>agregar</strong> nuevos (no hay forma de quitarlos desde acá).</p>
+      {#if adjuntosPrevios.length}
+        <ul class="lista-adjuntos">
+          {#each adjuntosPrevios as adjunto (adjunto.id)}
+            <li>
+              <Icono nombre="adjunto" tamano={14} />
+              <span class="nombre-adjunto">{nombreDeAdjunto(adjunto.path)}</span>
+              <span class="tipo-adjunto">{adjunto.mime_type}</span>
+            </li>
+          {/each}
+        </ul>
+      {:else}
+        <p class="sin-adjuntos">Esta publicación todavía no tiene adjuntos.</p>
+      {/if}
+    {/if}
+
+    <label class="etiqueta-archivos" for="post-archivos">Agregar archivos (hasta 10 × 10 MB)</label>
+    <input
+      id="post-archivos"
+      type="file"
+      multiple
+      accept={ACEPTAR}
+      bind:files={archivos}
+      bind:this={inputArchivos}
+    />
+
+    {#if archivosElegidos.length}
+      <ul class="lista-adjuntos">
+        {#each archivosElegidos as archivo (archivo.name + ':' + archivo.size)}
+          <li>
+            <Icono nombre="adjunto" tamano={14} />
+            <span class="nombre-adjunto">{archivo.name}</span>
+            <span class="tipo-adjunto">{formatoTamanio(archivo.size)}</span>
+          </li>
+        {/each}
+      </ul>
+      <Boton tipo="button" variante="neutra" onclick={soltarArchivos}>
+        Quitar selección
+      </Boton>
+    {/if}
+
+    {#if errorAdjuntos}
+      <p class="error-adjuntos" role="alert">{errorAdjuntos}</p>
+    {/if}
+  </fieldset>
+
   {#if error}
     <div class="error-general" role="alert">{error}</div>
   {/if}
@@ -228,6 +358,87 @@
     padding: 0.6rem 0.75rem;
     color: #b91c1c; /* danger-700 */
     font-size: 0.875rem;
+  }
+
+  /* Bloque de adjuntos (etapa F), mismo estilo de fieldset que el resto */
+  .adjuntos {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-panel);
+    padding: 0.9rem;
+  }
+
+  .adjuntos legend {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-texto-medio);
+    padding: 0 0.35rem;
+  }
+
+  .nota {
+    font-size: 0.8125rem;
+    color: var(--color-texto-medio);
+    background: var(--color-gris-100);
+    border-radius: var(--radio-boton);
+    padding: 0.5rem 0.65rem;
+  }
+
+  .etiqueta-archivos {
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .adjuntos input[type='file'] {
+    font-size: 0.8125rem;
+    color: var(--color-texto-medio);
+  }
+
+  .lista-adjuntos {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .lista-adjuntos li {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.8125rem;
+    color: var(--color-texto-medio);
+    background: var(--color-gris-100);
+    border-radius: var(--radio-boton);
+    padding: 0.35rem 0.55rem;
+    min-width: 0;
+  }
+
+  .nombre-adjunto {
+    font-weight: 500;
+    color: var(--color-texto);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .tipo-adjunto {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+  }
+
+  .sin-adjuntos {
+    font-size: 0.8125rem;
+    color: var(--color-texto-suave);
+  }
+
+  .error-adjuntos {
+    color: #b91c1c; /* danger-700 */
+    font-size: 0.8125rem;
   }
 
   .acciones {

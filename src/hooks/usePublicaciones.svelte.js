@@ -1,17 +1,22 @@
 // Hook usePublicaciones: estado y lógica del listado de publicaciones
-// (etapa D) y del formulario crear/editar con selects en cascada (etapa E).
-// Es el caso más complejo de filtros hasta ahora: muchos parámetros
-// recombinables + orden + tamaño de página, el DETALLE EXPANDIBLE por
-// fila (fetch GET /posts/{id} recién al abrir la fila) y el formulario con
-// TRES cargas propias: canales del usuario, medios por canal elegido y el
-// guardado en sí. Cada error tiene SU lugar:
+// (etapa D), del formulario crear/editar con selects en cascada (etapa E) y
+// del ciclo de vida con adjuntos (etapa F). Es el caso más complejo de
+// filtros hasta ahora: muchos parámetros recombinables + orden + tamaño de
+// página, el DETALLE EXPANDIBLE por fila (fetch GET /posts/{id} recién al
+// abrir la fila), el formulario con TRES cargas propias (canales del
+// usuario, medios por canal elegido y el guardado) y las TRANSICIONES de
+// estado que disparan las filas. Cada error tiene SU lugar:
 //   error             → carga del listado (pantalla completa, con Reintentar)
 //   errorDetalle      → carga del detalle expandido (dentro de la fila)
 //   errorCanales      → carga de los canales autorizados del formulario
 //   errorMedios       → carga de los medios de los canales elegidos
 //   erroresFormulario → 422 de validación, UNA entrada por campo
 //   errorFormulario   → 403 (RN-P01) o 422 de negocio (RN-P02/RN-P03)
-//   mensaje           → aviso de éxito tras guardar
+//   errorOperacion    → transición fallida fuera de diálogo (submit, revert,
+//                       archive, unarchive): aviso rojo sobre el listado
+//   erroresDialogo    → 422/403 de eliminar o stop, bajo el campo Motivo
+//                       del Confirmar (mismo criterio que Usuarios, etapa C)
+//   mensaje           → aviso de éxito tras guardar o transicionar
 // El alcance por rol NO se toca acá: el backend ya devuelve solo lo que el
 // usuario puede ver; el hook muestra lo que llega.
 import {
@@ -19,9 +24,12 @@ import {
   detalle as detalleApi,
   crear as crearApi,
   editar as editarApi,
+  transicion as transicionApi,
+  eliminar as eliminarApi,
   canalesDelUsuario,
   mediasDeCanal
 } from '../api/publicaciones.api.js'
+import { detener as detenerApi } from '../api/moderacion.api.js'
 import { sesion, cerrarSesion } from '../sesion.svelte.js'
 import { navigate } from '../router.js'
 import { mensajeDeError } from '../errores.js'
@@ -85,6 +93,18 @@ export function usePublicaciones() {
   // Aviso de éxito tras guardar (lo muestra la página; se limpia al abrir
   // el formulario de nuevo o al filtrar).
   let mensaje = $state('')
+
+  // ── Etapa F: ciclo de vida ──
+  // idOperando = id del post con una transición/eliminación en vuelo: la
+  // página lo usa para deshabilitar SU fila (y el Confirmar con ocupado).
+  // Como las operaciones son de a una, con un solo id alcanza.
+  let idOperando = $state(null)
+  // Error de una transición que NO corre dentro del Confirmar (submit,
+  // revert, unarchive) o de archive sin campo donde mostrarlo: aviso rojo.
+  let errorOperacion = $state('')
+  // Errores de eliminar y stop: se muestran bajo el campo Motivo del
+  // Confirmar, que queda abierto para corregir o cancelar (etapa C).
+  let erroresDialogo = $state([])
 
   // Devuelve true si el error era de sesión inválida (401): en ese caso ya
   // limpió la sesión y redirigió al login, y el que llama no hace nada más.
@@ -245,15 +265,17 @@ export function usePublicaciones() {
   // y el formulario sigue abierto con lo que el usuario escribió.
   // Esta función corre por evento (submit), así que puede leer los $state
   // internos sin caer en el auto-rastreo del $effect (lección de la etapa C).
-  async function guardar(post, datos) {
+  // Etapa F: `adjuntos` son los File objects nuevos del formulario (vacío =
+  // JSON puro como en la etapa E).
+  async function guardar(post, datos, adjuntos = []) {
     guardando = true
     erroresFormulario = {}
     errorFormulario = ''
     mensaje = ''
     try {
       const resultado = post
-        ? await editarApi(sesion.token, post.id, datos)
-        : await crearApi(sesion.token, datos)
+        ? await editarApi(sesion.token, post.id, datos, adjuntos)
+        : await crearApi(sesion.token, datos, adjuntos)
       if (resultado.errores) {
         erroresFormulario = resultado.errores
         return false
@@ -285,6 +307,89 @@ export function usePublicaciones() {
   // Filtrar invalida el aviso de éxito (habla de una operación anterior).
   function quitarMensaje() {
     mensaje = ''
+    errorOperacion = ''
+  }
+
+  // ── Etapa F: transiciones del ciclo de vida (RN-P07) ──
+  // accion es el último tramo del endpoint: 'submit' | 'revert-to-draft' |
+  // 'archive' | 'unarchive' | 'stop'. stop vive en el grupo /moderation/
+  // (lo puede disparar el dueño o un mod/admin sobre una PUBLISHED), así que
+  // su fetch va por moderacion.api.js; el cuerpo llega armado por la página
+  // ({confirm:true} para archive, {confirm:true, reason} para stop).
+  // Devuelve true si salió bien: la página cierra el diálogo en ese caso.
+  // Si la acción vino de un Confirmar con campo Motivo (stop), los errores
+  // quedan en erroresDialogo; si no, caen en errorOperacion (aviso rojo).
+  async function transicionar(post, accion, cuerpo = {}) {
+    if (idOperando !== null) return false
+    idOperando = post.id
+    errorOperacion = ''
+    erroresDialogo = []
+    mensaje = ''
+    try {
+      const resultado =
+        accion === 'stop'
+          ? await detenerApi(sesion.token, post.id, cuerpo.reason)
+          : await transicionApi(sesion.token, post.id, accion, cuerpo)
+      if (resultado.errores) {
+        erroresDialogo = resultado.errores
+        return false
+      }
+      if (resultado.error) {
+        // stop y archive corren DENTRO del Confirmar: el error se muestra
+        // en el diálogo (que queda abierto); las demás transiciones van
+        // sin diálogo y caen en el aviso rojo de la página.
+        if (accion === 'stop' || accion === 'archive') erroresDialogo = [resultado.error]
+        else errorOperacion = resultado.error
+        return false
+      }
+      mensaje = resultado.mensaje
+      // El post cambió de estado: el detalle expandido quedaría viejo y el
+      // listado hay que recargarlo para ver el badge nuevo.
+      cerrarDetalle()
+      await cargar(paginaActual, filtros)
+      return true
+    } catch (e) {
+      if (!manejarSesion(e)) errorOperacion = mensajeDeError(e)
+      return false
+    } finally {
+      idOperando = null
+    }
+  }
+
+  // DELETE /posts/{id} con motivo obligatorio (RN-P08): los errores (422 del
+  // motivo o 422/403 de negocio, RN-P09) bajan al Confirmar por
+  // erroresDialogo, que queda abierto. Devuelve true si se eliminó.
+  async function eliminar(post, motivo) {
+    if (idOperando !== null) return false
+    idOperando = post.id
+    errorOperacion = ''
+    erroresDialogo = []
+    mensaje = ''
+    try {
+      const resultado = await eliminarApi(sesion.token, post.id, motivo)
+      if (resultado.errores) {
+        erroresDialogo = resultado.errores
+        return false
+      }
+      if (resultado.error) {
+        erroresDialogo = [resultado.error]
+        return false
+      }
+      mensaje = resultado.mensaje
+      cerrarDetalle()
+      await cargar(paginaActual, filtros)
+      return true
+    } catch (e) {
+      if (!manejarSesion(e)) errorOperacion = mensajeDeError(e)
+      return false
+    } finally {
+      idOperando = null
+    }
+  }
+
+  // Cierra el diálogo de eliminación/stop descartando sus errores.
+  function limpiarErroresDialogo() {
+    erroresDialogo = []
   }
 
   return {
@@ -345,6 +450,15 @@ export function usePublicaciones() {
     get mensaje() {
       return mensaje
     },
+    get idOperando() {
+      return idOperando
+    },
+    get errorOperacion() {
+      return errorOperacion
+    },
+    get erroresDialogo() {
+      return erroresDialogo
+    },
     cargar,
     aplicarFiltros,
     cambiarPagina,
@@ -355,6 +469,9 @@ export function usePublicaciones() {
     cargarMedios,
     guardar,
     limpiarErroresFormulario,
-    quitarMensaje
+    quitarMensaje,
+    transicionar,
+    eliminar,
+    limpiarErroresDialogo
   }
 }

@@ -111,17 +111,47 @@ export async function mediasDeCanal(token, canalId) {
 //   { errores }         → 422 de VALIDACIÓN (cuerpo.errors por campo)
 //   { error }           → 403 (RN-P01) o 422 de NEGOCIO (RN-P02, RN-P03):
 //                         el backend manda message pero SIN objeto errors
-// Nota: sin adjuntos en esta etapa, el body es JSON puro (el endpoint
-// acepta multipart o JSON; con JSON no hace falta FormData).
-async function enviarFormulario(token, metodo, url, datos) {
+// Con adjuntos el body viaja como multipart/form-data: fetch SIN header
+// Content-Type (el navegador pone el boundary). Verificado contra el backend
+// real: PHP no interpreta multipart en PUT, así que editar con adjuntos se
+// hace con method spoofing (POST + campo _method=PUT, el patrón estándar de
+// Laravel); sin adjuntos queda el PUT JSON de la etapa E.
+function armarFormData(datos, adjuntos) {
+  const fd = new FormData()
+  for (const [clave, valor] of Object.entries(datos)) {
+    if (Array.isArray(valor)) {
+      if (valor.length === 0) {
+        // Un array vacío viaja como cadena vacía: Laravel la convierte en
+        // null (ConvertEmptyStringsToNull) y sincroniza a lista vacía.
+        fd.append(clave, '')
+      } else {
+        for (const item of valor) fd.append(clave + '[]', item)
+      }
+    } else if (valor === null) {
+      // null no se puede mandar en FormData: cadena vacía = limpiar el campo.
+      fd.append(clave, '')
+    } else {
+      fd.append(clave, valor)
+    }
+  }
+  // RN-P05: los archivos se llaman attachments[] para que lleguen como array.
+  for (const archivo of adjuntos) fd.append('attachments[]', archivo)
+  return fd
+}
+
+async function enviarFormulario(token, metodo, url, datos, adjuntos = []) {
+  const conAdjuntos = adjuntos.length > 0
+  // Con FormData el fetch NO lleva Content-Type (el navegador fija el
+  // boundary); con JSON sí es obligatorio para que Laravel lo parsee.
+  const headers = {
+    'Accept': 'application/json',
+    'Authorization': 'Bearer ' + token
+  }
+  if (!conAdjuntos) headers['Content-Type'] = 'application/json'
   const res = await fetch(url, {
-    method: metodo,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer ' + token
-    },
-    body: JSON.stringify(datos)
+    method: conAdjuntos && metodo === 'PUT' ? 'POST' : metodo,
+    headers,
+    body: conAdjuntos ? armarFormData({ ...datos, ...(metodo === 'PUT' ? { _method: 'PUT' } : {}) }, adjuntos) : JSON.stringify(datos)
   })
   if (res.status === 401) throw new Error('SESION_INVALIDA')
   const cuerpo = await res.json().catch(() => ({}))
@@ -135,14 +165,66 @@ async function enviarFormulario(token, metodo, url, datos) {
 
 // POST /posts — crea en estado draft. Validaciones del backend: name (255),
 // content (10.000), type (enum), channel_ids (mín. 1, autorizados → RN-P01),
-// scheduled_at (futura → RN-P06), media_ids (pertenecen a los canales → RN-P02).
-export function crear(token, datos) {
-  return enviarFormulario(token, 'POST', `${BASE_URL}/posts`, datos)
+// scheduled_at (futura → RN-P06), media_ids (pertenecen a los canales →
+// RN-P02), attachments (máx. 10 × 10 MB, mimes de la spec → RN-P05).
+export function crear(token, datos, adjuntos = []) {
+  return enviarFormulario(token, 'POST', `${BASE_URL}/posts`, datos, adjuntos)
 }
 
 // PUT /posts/{id} — solo el propietario (403 si no) y solo en draft (422
 // RN-P03). Acepta el formulario completo: los campos son opcionales
 // (sometimes) para el backend, y channel_ids/media_ids se sincronizan.
-export function editar(token, id, datos) {
-  return enviarFormulario(token, 'PUT', `${BASE_URL}/posts/${id}`, datos)
+// RN-P04: los adjuntos que llegan SE AGREGAN, los existentes no se tocan.
+export function editar(token, id, datos, adjuntos = []) {
+  return enviarFormulario(token, 'PUT', `${BASE_URL}/posts/${id}`, datos, adjuntos)
+}
+
+// POST /posts/{id}/{accion} — transiciones del ciclo de vida (RN-P07):
+// submit (draft→pending_review), revert-to-draft, archive (exige
+// {confirm:true}, RN-P10) y unarchive (solo mod/admin, RN-P12). El backend
+// contesta SIEMPRE el post actualizado con su message; ante 403/422 manda
+// {status:error, message} sin objeto errors (igual que las reglas de negocio
+// del formulario).
+export async function transicion(token, id, accion, cuerpo = {}) {
+  const res = await fetch(`${BASE_URL}/posts/${id}/${accion}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify(cuerpo)
+  })
+  if (res.status === 401) throw new Error('SESION_INVALIDA')
+  const respuesta = await res.json().catch(() => ({}))
+  if (res.status === 403 || res.status === 422) {
+    if (respuesta.errors) return { errores: Object.values(respuesta.errors).flat() }
+    return { error: respuesta.message ?? 'No se pudo aplicar la transición.' }
+  }
+  if (!res.ok) throw new Error('HTTP ' + res.status)
+  return { post: respuesta.data, mensaje: respuesta.message }
+}
+
+// DELETE /posts/{id} — baja lógica con motivo OBLIGATORIO (RN-P08, máx. 500).
+// Solo estados sin publicar (RN-P09): draft, pending_review,
+// approved_by_moderator, scheduled. El 422 por motivo vacío SÍ trae
+// errors.reason (DeletePostRequest); el 422 de estado es solo message.
+export async function eliminar(token, id, motivo) {
+  const res = await fetch(`${BASE_URL}/posts/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify({ reason: motivo })
+  })
+  if (res.status === 401) throw new Error('SESION_INVALIDA')
+  const respuesta = await res.json().catch(() => ({}))
+  if (res.status === 403 || res.status === 422) {
+    if (respuesta.errors) return { errores: Object.values(respuesta.errors).flat() }
+    return { error: respuesta.message ?? 'No se pudo eliminar la publicación.' }
+  }
+  if (!res.ok) throw new Error('HTTP ' + res.status)
+  return { mensaje: respuesta.message }
 }
