@@ -1,23 +1,23 @@
 <script>
-  import Icono from './Icono.svelte'
-  import { sesion } from '../../sesion.svelte.js'
-  import { useNotificaciones } from '../../hooks/useNotificaciones.svelte.js'
+  import Icono from "./Icono.svelte";
+  import { sesion } from "../../sesion.svelte.js";
+  import { useNotificaciones } from "../../hooks/useNotificaciones.svelte.js";
 
   // La campana es el único lugar que necesita el conteo EN VIVO. Como el estado
   // del hook es compartido (vive a nivel de módulo), si la página /notificaciones
   // marca algo como leído, este badge se actualiza al instante.
-  const notificaciones = useNotificaciones()
+  const notificaciones = useNotificaciones();
 
   // Polling del conteo cada 30 s, SOLO con sesión activa: el $effect lee
   // sesion.token (reacciona al login/logout) y devuelve clearInterval como
   // teardown (apunte §4.3): al desmontar la campana no queda el intervalo
   // colgado pidiendo el conteo para siempre (sin fugas).
   $effect(() => {
-    if (!sesion.token) return
-    notificaciones.cargarConteo()
-    const intervalo = setInterval(() => notificaciones.cargarConteo(), 30000)
-    return () => clearInterval(intervalo)
-  })
+    if (!sesion.token) return;
+    notificaciones.cargarConteo();
+    const intervalo = setInterval(() => notificaciones.cargarConteo(), 30000);
+    return () => clearInterval(intervalo);
+  });
 </script>
 
 <a
@@ -25,7 +25,7 @@
   class="campana"
   aria-label={notificaciones.noLeidas > 0
     ? `Notificaciones (${notificaciones.noLeidas} sin leer)`
-    : 'Notificaciones'}
+    : "Notificaciones"}
 >
   <Icono nombre="campana" />
   {#if notificaciones.noLeidas > 0}

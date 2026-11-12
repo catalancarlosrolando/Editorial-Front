@@ -1,6 +1,7 @@
 <script>
   import Boton from "../comunes/Boton.svelte";
   import Spinner from "../comunes/Spinner.svelte";
+  import { ETIQUETAS_ACCION } from "./etiquetas-roles-filtros-dialogos.js";
 
   // Panel del historial de un usuario (cambios de estado y de roles). Es solo
   // presentación: el hook trae items ya normalizados y los estados de carga.
@@ -11,15 +12,6 @@
     error = "",
     onCerrar,
   } = $props();
-
-  // Etiquedas de accion y clases para cambios de estado
-  const ETIQUETAS_ACCION = {
-    status_change: { label: "Cambio de estado", color: "#2563eb" },
-    role_assigned: { label: "Rol asignado", color: "#16a34a" },
-    role_revoked: { label: "Rol revocado", color: "#ea580c" },
-    enabled: { label: "Cuenta habilitada", color: "#16a34a" },
-    disabled: { label: "Cuenta deshabilitada", color: "#dc2626" },
-  };
 
   function formatoFecha(valor) {
     if (!valor) return "—";

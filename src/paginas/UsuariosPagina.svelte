@@ -1,106 +1,83 @@
 <script>
-  import { fade } from 'svelte/transition'
-  import { navigate } from '../router.js'
-  import { sesion } from '../sesion.svelte.js'
-  import { navegacion } from '../navegacion.svelte.js'
-  import { useUsuarios } from '../hooks/useUsuarios.svelte.js'
-  import Spinner from '../componentes/comunes/Spinner.svelte'
-  import MensajeError from '../componentes/comunes/MensajeError.svelte'
-  import Vacio from '../componentes/comunes/Vacio.svelte'
-  import Paginador from '../componentes/comunes/Paginador.svelte'
-  import Confirmar from '../componentes/comunes/Confirmar.svelte'
-  import UsuariosFiltros from '../componentes/usuarios/UsuariosFiltros.svelte'
-  import UsuariosListado from '../componentes/usuarios/UsuariosListado.svelte'
-  import HistorialUsuario from '../componentes/usuarios/HistorialUsuario.svelte'
-  import RolesUsuario from '../componentes/usuarios/RolesUsuario.svelte'
+  import { fade } from "svelte/transition";
+  import { navigate } from "../router.js";
+  import { sesion } from "../sesion.svelte.js";
+  import { navegacion } from "../navegacion.svelte.js";
+  import { useUsuarios } from "../hooks/useUsuarios.svelte.js";
+  import Spinner from "../componentes/comunes/Spinner.svelte";
+  import MensajeError from "../componentes/comunes/MensajeError.svelte";
+  import Vacio from "../componentes/comunes/Vacio.svelte";
+  import Paginador from "../componentes/comunes/Paginador.svelte";
+  import Confirmar from "../componentes/comunes/Confirmar.svelte";
+  import UsuariosFiltros from "../componentes/usuarios/UsuariosFiltros.svelte";
+  import UsuariosListado from "../componentes/usuarios/UsuariosListado.svelte";
+  import HistorialUsuario from "../componentes/usuarios/HistorialUsuario.svelte";
+  import RolesUsuario from "../componentes/usuarios/RolesUsuario.svelte";
+  import { DIALOGOS } from "../componentes/usuarios/etiquetas-roles-filtros-dialogos.js";
 
-  const usuarios = useUsuarios()
+  const usuarios = useUsuarios();
 
   // Panel de detalle bajo los filtros (uno a la vez): null, o
   // { tipo: 'historial' | 'roles', usuario }.
-  let panel = $state(null)
+  let panel = $state(null);
 
   // Diálogo Confirmar en vuelo: null o { accion, usuario }. La config de cada
   // acción vive acá: Rechazar y Deshabilitar exigen motivo (la UI es más
   // estricta que la API, donde reason es opcional).
-  let dialogo = $state(null)
-  const DIALOGOS = {
-    approve: {
-      titulo: 'Aprobar usuario',
-      texto: 'Aprobar',
-      aviso: 'El usuario quedará aprobado para entrar al sistema.',
-      peligroso: false,
-      obligatorio: false
-    },
-    reject: {
-      titulo: 'Rechazar solicitud',
-      texto: 'Rechazar',
-      aviso: 'La cuenta quedará eliminada y no podrá recuperarse.',
-      peligroso: true,
-      obligatorio: true
-    },
-    enable: {
-      titulo: 'Habilitar usuario',
-      texto: 'Habilitar',
-      aviso: 'La cuenta volverá al estado aprobado.',
-      peligroso: false,
-      obligatorio: false
-    },
-    disable: {
-      titulo: 'Deshabilitar usuario',
-      texto: 'Deshabilitar',
-      aviso: 'Se invalidarán todos los tokens del usuario y no podrá entrar hasta habilitarlo.',
-      peligroso: true,
-      obligatorio: true
-    }
-  }
+  let dialogo = $state(null);
 
   $effect(() => {
     if (!sesion.token) {
-      navigate('/login')
-      return
+      navigate("/login");
+      return;
     }
-    navegacion.seccion = '/usuarios'
+    navegacion.seccion = "/usuarios";
     // Carga inicial SIN filtros: el hook recibe todo por parámetro para no
     // dejar que este efecto rastree (y re-dispare) su estado interno.
-    usuarios.cargar(1, {})
-  })
+    usuarios.cargar(1, {});
+  });
 
   // Filtrar o cambiar de página cierra el panel: sus datos podrían quedar viejos.
   function filtrar(filtros) {
-    panel = null
-    usuarios.aplicarFiltros(filtros)
+    panel = null;
+    usuarios.aplicarFiltros(filtros);
   }
 
   function cambiarPagina(pagina) {
-    panel = null
-    usuarios.cambiarPagina(pagina)
+    panel = null;
+    usuarios.cambiarPagina(pagina);
   }
 
   function pedirConfirmacion(accion, usuario) {
-    dialogo = { accion, usuario }
+    dialogo = { accion, usuario };
   }
 
   async function confirmarAccion(motivo) {
-    const ok = await usuarios.cambiarEstado(dialogo.accion, dialogo.usuario, motivo)
-    if (ok) dialogo = null // éxito: cerrar; con 422/403 queda abierto mostrando el motivo
+    const ok = await usuarios.cambiarEstado(
+      dialogo.accion,
+      dialogo.usuario,
+      motivo,
+    );
+    if (ok) dialogo = null; // éxito: cerrar; con 422/403 queda abierto mostrando el motivo
   }
 
   function verHistorial(usuario) {
-    panel = { tipo: 'historial', usuario }
-    usuarios.verHistorial(usuario)
+    panel = { tipo: "historial", usuario };
+    usuarios.verHistorial(usuario);
   }
 
   function gestionarRoles(usuario) {
-    panel = { tipo: 'roles', usuario }
-    usuarios.limpiarErroresRoles()
+    panel = { tipo: "roles", usuario };
+    usuarios.limpiarErroresRoles();
   }
 
   // El panel de roles muestra SIEMPRE el usuario fresco del listado: tras
   // asignar/revocar, el hook recarga la página y los roles se actualizan.
   const usuarioPanel = $derived(
-    panel ? (usuarios.items.find((u) => u.id === panel.usuario.id) ?? panel.usuario) : null
-  )
+    panel
+      ? (usuarios.items.find((u) => u.id === panel.usuario.id) ?? panel.usuario)
+      : null,
+  );
 </script>
 
 <svelte:head>
@@ -114,7 +91,7 @@
 
   <UsuariosFiltros onFiltrar={filtrar} />
 
-  {#if panel?.tipo === 'historial'}
+  {#if panel?.tipo === "historial"}
     <HistorialUsuario
       usuario={panel.usuario}
       items={usuarios.historial?.items ?? []}
@@ -122,7 +99,7 @@
       error={usuarios.errorHistorial}
       onCerrar={() => (panel = null)}
     />
-  {:else if panel?.tipo === 'roles' && usuarioPanel}
+  {:else if panel?.tipo === "roles" && usuarioPanel}
     <RolesUsuario
       usuario={usuarioPanel}
       ocupado={usuarios.operando}

@@ -1,80 +1,85 @@
 <script>
-  import { Router } from 'sv-router'
+  import { Router } from "sv-router";
   // Importar router.js registra las rutas (createRouter corre al importarlo).
-  import { navigate } from './router.js'
-  import { sesion, cerrarSesion, tienePermiso, tieneRol } from './sesion.svelte.js'
-  import { navegacion } from './navegacion.svelte.js'
-  import { logout, usuarioActual } from './api/sesion.api.js'
-  import Icono from './componentes/comunes/Icono.svelte'
-  import Spinner from './componentes/comunes/Spinner.svelte'
-  import CampanaNotificaciones from './componentes/comunes/CampanaNotificaciones.svelte'
+  import { navigate } from "./router.js";
+  import {
+    sesion,
+    cerrarSesion,
+    tienePermiso,
+    tieneRol,
+  } from "./sesion.svelte.js";
+  import { navegacion } from "./navegacion.svelte.js";
+  import { logout, usuarioActual } from "./api/sesion.api.js";
+  import Icono from "./componentes/comunes/Icono.svelte";
+  import Spinner from "./componentes/comunes/Spinner.svelte";
+  import CampanaNotificaciones from "./componentes/comunes/CampanaNotificaciones.svelte";
+  import NavegacionBarra from "./componentes/navegacion/NavegacionBarra.svelte";
 
   // Al abrir la app con un token guardado lo validamos UNA vez (GET /api/user)
   // antes de mostrar cualquier página, para no operar con un token vencido.
-  const tokenAlAbrir = sesion.token
-  let verificando = $state(Boolean(tokenAlAbrir))
+  const tokenAlAbrir = sesion.token;
+  let verificando = $state(Boolean(tokenAlAbrir));
 
   // Menú lateral off-canvas (solo en pantallas menores a 1024px, donde la
   // sidebar no queda fija y aparece el botón hamburguesa en la topbar).
-  let menuLateralAbierto = $state(false)
+  let menuLateralAbierto = $state(false);
 
   function abrirMenuLateral() {
-    menuLateralAbierto = true
+    menuLateralAbierto = true;
   }
 
   function cerrarMenuLateral() {
-    menuLateralAbierto = false
+    menuLateralAbierto = false;
   }
-
   // Título de la topbar según la sección anunciada por cada página.
   const nombreSeccion = $derived.by(() => {
-    if (navegacion.seccion === '/canales') return 'Canales'
-    if (navegacion.seccion === '/dispositivos') return 'Dispositivos'
-    if (navegacion.seccion === '/medios') return 'Medios'
-    if (navegacion.seccion === '/asignar-medios') return 'Asignar medios'
-    if (navegacion.seccion === '/asignar-canales') return 'Asignar canales'
-    if (navegacion.seccion === '/notificaciones') return 'Notificaciones'
-    if (navegacion.seccion === '/usuarios') return 'Usuarios'
-    if (navegacion.seccion === '/publicadores') return 'Publicadores'
-    if (navegacion.seccion === '/publicaciones') return 'Publicaciones'
-    if (navegacion.seccion === '/moderacion') return 'Moderación'
-    if (navegacion.seccion === '/login') return 'Iniciar sesión'
-    return 'Inicio'
-  })
+    if (navegacion.seccion === "/canales") return "Canales";
+    if (navegacion.seccion === "/dispositivos") return "Dispositivos";
+    if (navegacion.seccion === "/medios") return "Medios";
+    if (navegacion.seccion === "/asignar-medios") return "Asignar medios";
+    if (navegacion.seccion === "/asignar-canales") return "Asignar canales";
+    if (navegacion.seccion === "/notificaciones") return "Notificaciones";
+    if (navegacion.seccion === "/usuarios") return "Usuarios";
+    if (navegacion.seccion === "/publicadores") return "Publicadores";
+    if (navegacion.seccion === "/publicaciones") return "Publicaciones";
+    if (navegacion.seccion === "/moderacion") return "Moderación";
+    if (navegacion.seccion === "/login") return "Iniciar sesión";
+    return "Inicio";
+  });
 
   $effect(() => {
     // Al cambiar de sección (leemos la ruta compartida) el menú mobile se cierra.
-    navegacion.seccion
-    menuLateralAbierto = false
-  })
+    navegacion.seccion;
+    menuLateralAbierto = false;
+  });
 
   $effect(() => {
-    verificarSesionGuardada()
-  })
+    verificarSesionGuardada();
+  });
 
   async function verificarSesionGuardada() {
-    if (!tokenAlAbrir) return
+    if (!tokenAlAbrir) return;
     try {
       // El token sigue vivo: refrescamos el usuario por si cambió en el backend.
-      sesion.usuario = await usuarioActual(tokenAlAbrir)
+      sesion.usuario = await usuarioActual(tokenAlAbrir);
     } catch {
       // 401: el token ya no sirve; sesión afuera y a la pantalla de login.
-      cerrarSesion()
-      navigate('/login')
+      cerrarSesion();
+      navigate("/login");
     } finally {
-      verificando = false
+      verificando = false;
     }
   }
 
   async function salir() {
     // Si el logout falla igual cerramos: lo importante es limpiar el lado cliente.
     try {
-      await logout(sesion.token)
+      await logout(sesion.token);
     } catch {
       // Error ignorado a propósito: el cierre local es lo que manda acá.
     }
-    cerrarSesion()
-    navigate('/login')
+    cerrarSesion();
+    navigate("/login");
   }
 </script>
 
@@ -87,66 +92,22 @@
   <a class="salto" href="#contenido">Saltar al contenido</a>
   <div class="disposicion">
     {#if menuLateralAbierto}
-      <button type="button" class="velo" aria-label="Cerrar menú" onclick={cerrarMenuLateral}></button>
+      <button
+        type="button"
+        class="velo"
+        aria-label="Cerrar menú"
+        onclick={cerrarMenuLateral}
+      ></button>
     {/if}
 
     <aside class="lateral" class:abierta={menuLateralAbierto}>
-      <div class="marca">📰 <span>Editorial Admin</span></div>
-      <nav aria-label="Principal">
-        <p class="grupo">Administración</p>
-        <a href="/inicio" class:activa={navegacion.seccion === '/inicio'}>
-          <Icono nombre="inicio" />
-          <span>Inicio</span>
-        </a>
-        <a href="/canales" class:activa={navegacion.seccion === '/canales'}>
-          <Icono nombre="canales" />
-          <span>Canales</span>
-        </a>
-        <a href="/dispositivos" class:activa={navegacion.seccion === '/dispositivos'}>
-          <Icono nombre="dispositivos" />
-          <span>Dispositivos</span>
-        </a>
-        <a href="/medios" class:activa={navegacion.seccion === '/medios'}>
-          <Icono nombre="medios" />
-          <span>Medios</span>
-        </a>
-        <p class="grupo">Asignaciones</p>
-        <a href="/asignar-medios" class:activa={navegacion.seccion === '/asignar-medios'}>
-          <Icono nombre="medios" />
-          <span>Asignar medios</span>
-        </a>
-        <a href="/asignar-canales" class:activa={navegacion.seccion === '/asignar-canales'}>
-          <Icono nombre="canales" />
-          <span>Asignar canales</span>
-        </a>
-        <p class="grupo">Usuarios</p>
-        <a href="/usuarios" class:activa={navegacion.seccion === '/usuarios'}>
-          <Icono nombre="usuarios" />
-          <span>Usuarios</span>
-        </a>
-        <a href="/publicadores" class:activa={navegacion.seccion === '/publicadores'}>
-          <Icono nombre="canales" />
-          <span>Publicadores</span>
-        </a>
-        {#if tienePermiso('editar-contenido')}
-          <p class="grupo">Contenido</p>
-          <a href="/publicaciones" class:activa={navegacion.seccion === '/publicaciones'}>
-            <Icono nombre="publicaciones" />
-            <span>Publicaciones</span>
-          </a>
-          <!-- Etapa F: la moderación es por ROL (moderador/admin, RN-P13),
-               no por permiso — igual que lo chequea el backend. -->
-          {#if tieneRol('moderador', 'admin')}
-            <a href="/moderacion" class:activa={navegacion.seccion === '/moderacion'}>
-              <Icono nombre="ojo" />
-              <span>Moderación</span>
-            </a>
-          {/if}
-        {/if}
-      </nav>
+      <div class="marca"><span>Editorial Dashboard</span></div>
+      <NavegacionBarra {tienePermiso} {tieneRol} />
       <div class="pie">
         <div class="usuario">
-          <span class="inicial">{sesion.usuario?.name?.charAt(0)?.toUpperCase() ?? '?'}</span>
+          <span class="inicial"
+            >{sesion.usuario?.name?.charAt(0)?.toUpperCase() ?? "?"}</span
+          >
           <span class="nombre">{sesion.usuario?.name}</span>
         </div>
         <button type="button" class="salir" onclick={salir}>
@@ -255,57 +216,6 @@
     font-weight: 700;
     font-size: 1rem;
     padding: 0 0.75rem;
-  }
-
-  nav {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-    overflow-y: auto;
-  }
-
-  /* Encabezado de grupo de navegación, como en la sidebar de referencia */
-  .grupo {
-    margin: 0 0 6px;
-    padding: 0 0.75rem;
-    font-size: 0.6875rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--color-texto-suave);
-  }
-
-  nav a {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    padding: 0.5rem 0.75rem;
-    border-radius: var(--radio-boton);
-    color: var(--color-texto-medio);
-    font-size: 0.875rem;
-    font-weight: 500;
-    text-decoration: none;
-    transition:
-      background-color var(--transicion),
-      color var(--transicion);
-  }
-
-  nav a:hover {
-    background: var(--color-gris-100);
-    color: var(--color-texto);
-  }
-
-  /* Ítem activo: fondo suave + texto primary, como la sidebar del sistema */
-  nav a.activa {
-    background: var(--color-primario-suave);
-    color: var(--color-primario-hover);
-    font-weight: 600;
-  }
-
-  nav a:focus-visible {
-    outline: 2px solid var(--color-primario);
-    outline-offset: 1px;
   }
 
   .pie {
