@@ -114,5 +114,86 @@ export async function reenviarEmailVerificacion(token) {
   return { mensaje: cuerpo.message ?? 'Correo de verificación reenviado.' }
 }
 
-export { register as registrar, reenviarEmailVerificacion as resendVerificationEmail }
+// Solicita el enlace de recuperación de contraseña:
+// Endpoint: POST /api/password/forgot
+// Body: { "email": string }
+// Headers: Content-Type: application/json, Accept: application/json
+export async function solicitarRecuperacionPassword(email) {
+  const res = await fetch(`${BASE_URL}/password/forgot`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({ email })
+  })
+
+  const cuerpo = await res.json().catch(() => ({}))
+
+  if (res.status === 422) {
+    return {
+      ok: false,
+      errores: cuerpo.errors ?? {},
+      mensaje: cuerpo.message ?? 'No se pudo procesar la solicitud con el correo provisto.'
+    }
+  }
+
+  if (!res.ok) {
+    return {
+      ok: false,
+      errores: cuerpo.errors ?? {},
+      mensaje: cuerpo.message ?? ('Error al solicitar recuperación (HTTP ' + res.status + ')')
+    }
+  }
+
+  return {
+    ok: true,
+    mensaje: cuerpo.message ?? cuerpo.status ?? 'Enlace enviado a tu correo'
+  }
+}
+
+// Restablece la contraseña utilizando el token y datos provistos:
+// Endpoint: POST /api/password/reset
+// Body: { "token": string, "email": string, "password": string, "password_confirmation": string }
+// Headers: Content-Type: application/json, Accept: application/json
+export async function restablecerPassword({ token, email, password, password_confirmation }) {
+  const res = await fetch(`${BASE_URL}/password/reset`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({ token, email, password, password_confirmation })
+  })
+
+  const cuerpo = await res.json().catch(() => ({}))
+
+  if (res.status === 422 || res.status === 400) {
+    return {
+      ok: false,
+      errores: cuerpo.errors ?? {},
+      mensaje: cuerpo.message ?? 'El token es inválido o ha expirado.'
+    }
+  }
+
+  if (!res.ok) {
+    return {
+      ok: false,
+      errores: cuerpo.errors ?? {},
+      mensaje: cuerpo.message ?? ('Error al restablecer la contraseña (HTTP ' + res.status + ')')
+    }
+  }
+
+  return {
+    ok: true,
+    mensaje: cuerpo.message ?? cuerpo.status ?? 'Contraseña restablecida con éxito'
+  }
+}
+
+export {
+  register as registrar,
+  reenviarEmailVerificacion as resendVerificationEmail,
+  solicitarRecuperacionPassword as forgotPassword,
+  restablecerPassword as resetPassword
+}
 

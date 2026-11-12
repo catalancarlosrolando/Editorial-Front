@@ -5,6 +5,7 @@ import { createRouter } from 'sv-router'
 import InicioPagina from './paginas/InicioPagina.svelte'
 import LoginPagina from './paginas/LoginPagina.svelte'
 import RegisterPagina from './paginas/RegisterPagina.svelte'
+import ResetPasswordPagina from './paginas/ResetPasswordPagina.svelte'
 import CanalesPagina from './paginas/CanalesPagina.svelte'
 import DispositivosPagina from './paginas/DispositivosPagina.svelte'
 import MediosPagina from './paginas/MediosPagina.svelte'
@@ -25,6 +26,7 @@ export const { navigate } = createRouter({
   '/login': LoginPagina,
   '/register': RegisterPagina,
   '/registro': RegisterPagina,
+  '/reset-password': ResetPasswordPagina,
   '/canales': CanalesPagina,
   '/dispositivos': DispositivosPagina,
   '/medios': MediosPagina,

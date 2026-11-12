@@ -46,6 +46,7 @@
     if (navegacion.seccion === "/moderacion") return "Moderación";
     if (navegacion.seccion === "/login") return "Iniciar sesión";
     if (navegacion.seccion === "/register" || navegacion.seccion === "/registro") return "Registrarse";
+    if (navegacion.seccion === "/reset-password") return "Restablecer contraseña";
     return "Inicio";
   });
 
@@ -90,7 +91,7 @@
     <Spinner />
     <p>Verificando sesión…</p>
   </div>
-{:else if sesion.token && navegacion.seccion !== '/login' && navegacion.seccion !== '/register' && navegacion.seccion !== '/registro'}
+{:else if sesion.token && navegacion.seccion !== '/login' && navegacion.seccion !== '/register' && navegacion.seccion !== '/registro' && navegacion.seccion !== '/reset-password'}
   <a class="salto" href="#contenido">Saltar al contenido</a>
   <div class="disposicion">
     {#if menuLateralAbierto}
