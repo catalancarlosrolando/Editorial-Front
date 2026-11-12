@@ -6,6 +6,7 @@
   import Boton from '../componentes/comunes/Boton.svelte'
   import Campo from '../componentes/comunes/Campo.svelte'
   import Casilla from '../componentes/comunes/Casilla.svelte'
+  import ModalRecuperarPassword from '../componentes/comunes/ModalRecuperarPassword.svelte'
 
   // Esta página es pública: si ya hay sesión, directito al inicio.
   $effect(() => {
@@ -21,6 +22,9 @@
   let enviando = $state(false)
   let errores = $state({})
   let mensaje = $state('')
+
+  // Estado del modal "¿Olvidaste tu contraseña?"
+  let modalOlvidoAbierto = $state(false)
 
   async function enviar(e) {
     e.preventDefault()
@@ -70,7 +74,19 @@
       requerido
       errores={errores.password ?? []}
     />
-    <Casilla id="login-recordarme" etiqueta="Recordarme (sesión de 30 días)" bind:marcado={recordarme} />
+    <div class="fila-auxiliar">
+      <Casilla id="login-recordarme" etiqueta="Recordarme (sesión de 30 días)" bind:marcado={recordarme} />
+      <a
+        href="#olvide-contrasena"
+        class="enlace-olvido"
+        onclick={(e) => {
+          e.preventDefault()
+          modalOlvidoAbierto = true
+        }}
+      >
+        ¿Olvidaste tu contraseña?
+      </a>
+    </div>
     {#if mensaje}
       <p class="mensaje-error" role="alert">{mensaje}</p>
     {/if}
@@ -85,6 +101,13 @@
     </div>
   </form>
 </div>
+
+{#if modalOlvidoAbierto}
+  <ModalRecuperarPassword
+    emailInicial={correo}
+    onCerrar={() => (modalOlvidoAbierto = false)}
+  />
+{/if}
 
 <style>
   .pie-enlace {
@@ -126,6 +149,25 @@
   .subtitulo {
     color: var(--color-texto-suave);
     font-size: 0.875rem;
+  }
+
+  .fila-auxiliar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .enlace-olvido {
+    align-self: flex-start;
+    color: var(--color-primario);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .enlace-olvido:hover {
+    text-decoration: underline;
   }
 
   .mensaje-error {
