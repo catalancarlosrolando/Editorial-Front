@@ -1,6 +1,7 @@
 <script>
   import Boton from "../comunes/Boton.svelte";
   import Seleccion from "../comunes/Seleccion.svelte";
+  import { ROLES } from "./etiquetas-roles-filtros-dialogos.js";
 
   // Panel de roles de un usuario: asignar (cualquier rol de la spec) y revocar
   // (solo los que ya tiene). Solo presentación: los errores del backend llegan
@@ -15,15 +16,6 @@
     onRevocar,
     onCerrar,
   } = $props();
-
-  // No hay endpoint de catálogo de roles: los valores vienen de la spec de
-  // assign-role (invitado / publicador / moderador / admin).
-  const ROLES = [
-    { value: "invitado", label: "Invitado" },
-    { value: "publicador", label: "Publicador" },
-    { value: "moderador", label: "Moderador" },
-    { value: "admin", label: "Admin" },
-  ];
 
   let rolAsignar = $state("");
   let rolRevocar = $state("");
