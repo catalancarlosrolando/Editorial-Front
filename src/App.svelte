@@ -14,6 +14,7 @@
   import Spinner from "./componentes/comunes/Spinner.svelte";
   import CampanaNotificaciones from "./componentes/comunes/CampanaNotificaciones.svelte";
   import NavegacionBarra from "./componentes/navegacion/NavegacionBarra.svelte";
+  import AvisoVerificacionEmail from "./componentes/comunes/AvisoVerificacionEmail.svelte";
 
   // Al abrir la app con un token guardado lo validamos UNA vez (GET /api/user)
   // antes de mostrar cualquier página, para no operar con un token vencido.
@@ -44,6 +45,7 @@
     if (navegacion.seccion === "/publicaciones") return "Publicaciones";
     if (navegacion.seccion === "/moderacion") return "Moderación";
     if (navegacion.seccion === "/login") return "Iniciar sesión";
+    if (navegacion.seccion === "/register" || navegacion.seccion === "/registro") return "Registrarse";
     return "Inicio";
   });
 
@@ -88,7 +90,7 @@
     <Spinner />
     <p>Verificando sesión…</p>
   </div>
-{:else if sesion.token}
+{:else if sesion.token && navegacion.seccion !== '/login' && navegacion.seccion !== '/register' && navegacion.seccion !== '/registro'}
   <a class="salto" href="#contenido">Saltar al contenido</a>
   <div class="disposicion">
     {#if menuLateralAbierto}
@@ -131,6 +133,9 @@
         <span class="seccion-actual">{nombreSeccion}</span>
         <CampanaNotificaciones />
       </header>
+      {#if sesion.usuario && sesion.usuario.email_verified_at === null}
+        <AvisoVerificacionEmail />
+      {/if}
       <main id="contenido">
         <Router />
       </main>
