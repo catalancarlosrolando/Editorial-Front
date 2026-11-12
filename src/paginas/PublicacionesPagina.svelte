@@ -221,6 +221,12 @@
     publicaciones.cerrarDetalle()
     publicaciones.cambiarPagina(pagina)
   }
+
+  // Reintentar el detalle fallido: reabre con el MISMO resumen (nuevo pedido,
+  // mismos estados de carga/error del hook).
+  function reintentarDetalle() {
+    publicaciones.abrirDetalle(publicaciones.detalle.resumen)
+  }
 </script>
 
 <svelte:head>
@@ -293,7 +299,9 @@
         detalle={publicaciones.detalle}
         cargandoDetalle={publicaciones.cargandoDetalle}
         errorDetalle={publicaciones.errorDetalle}
-        onAlternar={publicaciones.alternarDetalle}
+        onVerDetalle={publicaciones.abrirDetalle}
+        onCerrarDetalle={publicaciones.cerrarDetalle}
+        onReintentarDetalle={reintentarDetalle}
         acciones={accionesDe}
         ocupado={publicaciones.idOperando !== null}
       />

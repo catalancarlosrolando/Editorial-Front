@@ -4,10 +4,11 @@
   import EstadoBadge from '../comunes/EstadoBadge.svelte'
   import { etiquetaEstado } from './estados-publicacion.js'
 
-  // Contenido del detalle expandido de una publicación (etapa D). Muestra
-  // los mismos 4 estados que un listado pero a escala de fila: cargando /
-  // error (con Reintentar) / datos. El resumen de la fila basta para el
-  // encabezado; el cuerpo sale de 'datos' (GET /posts/{id}).
+  // Contenido del detalle de una publicación (etapa D), adentro del
+  // DialogoPublicacion (lo usan Publicaciones y Moderación). Muestra los
+  // mismos 4 estados que un listado: cargando / error (con Reintentar) /
+  // datos. El resumen de la fila basta para el encabezado; el cuerpo sale
+  // de 'datos' (GET /posts/{id}).
   let { resumen, datos, cargando, error, onReintentar } = $props()
 
   function formatoFecha(valor) {
