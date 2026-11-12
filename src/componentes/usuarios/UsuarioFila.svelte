@@ -1,6 +1,6 @@
 <script>
-  import MenuAcciones from '../comunes/MenuAcciones.svelte'
-  import EstadoBadge from '../comunes/EstadoBadge.svelte'
+  import MenuAcciones from "../comunes/MenuAcciones.svelte";
+  import EstadoBadge from "../comunes/EstadoBadge.svelte";
 
   // Una fila del listado de usuarios. El menú depende del estado actual
   // (RN-U02, ciclo de vida unidireccional):
@@ -9,12 +9,18 @@
   //   disabled            → Habilitar
   //   deleted             → sin acciones de ciclo de vida
   // Ver historial y Gestionar roles están disponibles para cualquier estado.
-  let { usuario, operando = false, onVerHistorial, onGestionarRoles, onCambiarEstado } = $props()
+  let {
+    usuario,
+    operando = false,
+    onVerHistorial,
+    onGestionarRoles,
+    onCambiarEstado,
+  } = $props();
 
   // Las fechas llegan en ISO; las mostramos en formato local.
   function formatoFecha(valor) {
-    if (!valor) return '—'
-    return new Date(valor).toLocaleString()
+    if (!valor) return "—";
+    return new Date(valor).toLocaleString();
   }
 </script>
 
@@ -26,7 +32,7 @@
   </td>
   <td>
     <span class="celda-etiqueta">DNI</span>
-    <span class="mono">{usuario.dni ?? '—'}</span>
+    <span class="mono">{usuario.dni ?? "—"}</span>
   </td>
   <td>
     <span class="celda-etiqueta">Roles</span>
@@ -52,42 +58,50 @@
       etiqueta="Acciones del usuario"
       deshabilitado={operando}
       items={[
-        ...(usuario.status === 'registered' || usuario.status === 'verified'
+        ...(usuario.status === "registered" || usuario.status === "verified"
           ? [
               {
-                etiqueta: 'Aprobar',
-                icono: 'check',
-                alElegir: () => onCambiarEstado('approve', usuario)
+                etiqueta: "Aprobar",
+                icono: "check",
+                alElegir: () => onCambiarEstado("approve", usuario),
               },
               {
-                etiqueta: 'Rechazar',
-                icono: 'cruzar',
+                etiqueta: "Rechazar",
+                icono: "cruzar",
                 peligroso: true,
-                alElegir: () => onCambiarEstado('reject', usuario)
-              }
+                alElegir: () => onCambiarEstado("reject", usuario),
+              },
             ]
           : []),
-        ...(usuario.status === 'approved'
+        ...(usuario.status === "approved"
           ? [
               {
-                etiqueta: 'Deshabilitar',
-                icono: 'bloquear',
+                etiqueta: "Deshabilitar",
+                icono: "bloquear",
                 peligroso: true,
-                alElegir: () => onCambiarEstado('disable', usuario)
-              }
+                alElegir: () => onCambiarEstado("disable", usuario),
+              },
             ]
           : []),
-        ...(usuario.status === 'disabled'
+        ...(usuario.status === "disabled"
           ? [
               {
-                etiqueta: 'Habilitar',
-                icono: 'desbloquear',
-                alElegir: () => onCambiarEstado('enable', usuario)
-              }
+                etiqueta: "Habilitar",
+                icono: "desbloquear",
+                alElegir: () => onCambiarEstado("enable", usuario),
+              },
             ]
           : []),
-        { etiqueta: 'Ver historial', icono: 'historial', alElegir: () => onVerHistorial(usuario) },
-        { etiqueta: 'Gestionar roles', icono: 'editar', alElegir: () => onGestionarRoles(usuario) }
+        {
+          etiqueta: "Ver historial",
+          icono: "historial",
+          alElegir: () => onVerHistorial(usuario),
+        },
+        {
+          etiqueta: "Gestionar roles",
+          icono: "editar",
+          alElegir: () => onGestionarRoles(usuario),
+        },
       ]}
     />
   </td>

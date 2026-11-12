@@ -4,23 +4,37 @@
 
 :root {
   /* Colores semánticos: 500 base · 600 hover/texto · 50 fondos suaves */
-  --color-primario: #3b82f6;        /* blue-500 */
-  --color-primario-hover: #2563eb;  /* blue-600 */
-  --color-primario-suave: #eff6ff;  /* blue-50: ítem activo */
-  --color-peligro: #ef4444;         /* red-500 */
-  --color-peligro-hover: #dc2626;   /* red-600 */
-  --color-exito: #22c55e;           /* green-500 */
-  --color-exito-texto: #16a34a;     /* green-600 */
+  --color-primario: #3b82f6;
+  /* blue-500 */
+  --color-primario-hover: #2563eb;
+  /* blue-600 */
+  --color-primario-suave: #eff6ff;
+  /* blue-50: ítem activo */
+  --color-peligro: #ef4444;
+  /* red-500 */
+  --color-peligro-hover: #dc2626;
+  /* red-600 */
+  --color-exito: #22c55e;
+  /* green-500 */
+  --color-exito-texto: #16a34a;
+  /* green-600 */
 
   /* Grises (escala Zinc): superficies, divisores y texto */
-  --color-fondo: #fafafa;           /* gray-50: body y hover de fila */
+  --color-fondo: #fafafa;
+  /* gray-50: body y hover de fila */
   --color-panel: #ffffff;
-  --color-gris-100: #f4f4f5;        /* hover de ítems de navegación */
-  --color-borde: #e4e4e7;           /* gray-200: divisores de tablas y paneles */
-  --color-borde-fuerte: #d4d4d8;    /* gray-300: bordes de inputs y botones neutros */
-  --color-texto: #09090b;           /* gray-950 */
-  --color-texto-medio: #52525b;     /* gray-600 */
-  --color-texto-suave: #71717a;     /* gray-500: labels de celda, meta */
+  --color-gris-100: #f4f4f5;
+  /* hover de ítems de navegación */
+  --color-borde: #e4e4e7;
+  /* gray-200: divisores de tablas y paneles */
+  --color-borde-fuerte: #d4d4d8;
+  /* gray-300: bordes de inputs y botones neutros */
+  --color-texto: #09090b;
+  /* gray-950 */
+  --color-texto-medio: #52525b;
+  /* gray-600 */
+  --color-texto-suave: #71717a;
+  /* gray-500: labels de celda, meta */
 
   /* Panel = ring 1px 5% + sombra suave (combo medido del sistema) */
   --anillo: 0 0 0 1px rgb(9 9 9 / 0.05);
@@ -72,7 +86,7 @@ h2 {
 
 /* Página estándar: ancho fijo, centrada, con aire entre secciones */
 .pagina {
-  max-width: 960px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 1.5rem 1rem 3rem;
   display: flex;
@@ -107,7 +121,8 @@ h2 {
    tarjetas apiladas (<640px). Cada td lleva su <span class="celda-etiqueta">,
    que aparece solo en modo tarjeta. Patrón responsive del design system. ── */
 .envoltura-tabla {
-  overflow-x: auto; /* scroll horizontal si falta ancho en pantallas medianas */
+  overflow-x: auto;
+  /* scroll horizontal si falta ancho en pantallas medianas */
 }
 
 .tabla {
@@ -115,7 +130,8 @@ h2 {
   table-layout: auto;
   white-space: nowrap;
   text-align: left;
-  font-size: 0.875rem; /* 14px: la escala de cuerpo del dashboard */
+  font-size: 0.875rem;
+  /* 14px: la escala de cuerpo del dashboard */
   line-height: 1.25rem;
   border-collapse: separate;
   border-spacing: 0;
@@ -162,42 +178,96 @@ h2 {
 }
 
 @media (width < 40rem) {
-  .tabla {
-    display: block;
-    white-space: normal;
-  }
 
+  /* Ocultar el encabezado sin quitarlo de los lectores de pantalla */
   .tabla thead {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
 
+  .tabla,
   .tabla tbody {
     display: block;
   }
 
+  /* La fila pasa a ser una card */
   .tabla tbody tr {
     display: block;
     position: relative;
-    padding-block: 8px;
-    border-bottom: 1px solid var(--color-borde);
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    background: var(--color-fondo, #fff);
+    border: 1px solid var(--color-borde);
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
   }
 
-  .tabla tbody tr:last-child {
+  /* Cada celda: etiqueta a la izquierda, valor a la derecha */
+  .tabla td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border: none;
+    border-bottom: 1px dashed var(--color-borde);
+    text-align: right;
+  }
+
+  .tabla td:last-child {
     border-bottom: none;
   }
 
-  .tabla td {
-    display: block;
-    padding: 0 16px;
-    border-top: none;
+  .celda-etiqueta {
+    display: inline;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--color-texto-suave, #6b7280);
+    text-align: left;
   }
 
-  .celda-etiqueta {
+  /* Primera celda (usuario): como encabezado de la card */
+  .tabla td:first-child {
     display: block;
-    padding: 8px 0 4px;
-    font-size: 0.875rem;
+    text-align: left;
+    padding-right: 40px;
+    padding-left: 0px;
+    /* deja espacio para el menú */
+    border-bottom: 1px solid var(--color-borde);
+  }
+
+  .tabla td:first-child .celda-etiqueta {
+    display: none;
+  }
+
+  .tabla td:first-child .nombre {
+    display: block;
     font-weight: 600;
-    color: var(--color-texto-suave);
+  }
+
+  .tabla td:first-child .email {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--color-texto-suave, #6b7280);
+    word-break: break-all;
+  }
+
+  /* Acciones: menú arriba a la derecha de la card */
+  .tabla td:last-child {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 0;
+  }
+
+  .tabla td:last-child .celda-etiqueta {
+    display: none;
   }
 }
 
@@ -206,7 +276,8 @@ h2 {
   display: inline-block;
   padding: 2px 10px;
   border-radius: 999px;
-  font-size: 0.75rem; /* 12px */
+  font-size: 0.75rem;
+  /* 12px */
   line-height: 1rem;
   font-weight: 600;
   border: 1px solid transparent;

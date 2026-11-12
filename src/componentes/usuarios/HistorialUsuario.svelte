@@ -1,22 +1,29 @@
 <script>
-  import Boton from '../comunes/Boton.svelte'
-  import Spinner from '../comunes/Spinner.svelte'
+  import Boton from "../comunes/Boton.svelte";
+  import Spinner from "../comunes/Spinner.svelte";
 
   // Panel del historial de un usuario (cambios de estado y de roles). Es solo
   // presentación: el hook trae items ya normalizados y los estados de carga.
-  let { usuario, items = [], cargando = false, error = '', onCerrar } = $props()
+  let {
+    usuario,
+    items = [],
+    cargando = false,
+    error = "",
+    onCerrar,
+  } = $props();
 
+  // Etiquedas de accion y clases para cambios de estado
   const ETIQUETAS_ACCION = {
-    status_change: 'Cambio de estado',
-    role_assigned: 'Rol asignado',
-    role_revoked: 'Rol revocado',
-    enabled: 'Cuenta habilitada',
-    disabled: 'Cuenta deshabilitada'
-  }
+    status_change: { label: "Cambio de estado", color: "#2563eb" },
+    role_assigned: { label: "Rol asignado", color: "#16a34a" },
+    role_revoked: { label: "Rol revocado", color: "#ea580c" },
+    enabled: { label: "Cuenta habilitada", color: "#16a34a" },
+    disabled: { label: "Cuenta deshabilitada", color: "#dc2626" },
+  };
 
   function formatoFecha(valor) {
-    if (!valor) return '—'
-    return new Date(valor).toLocaleString()
+    if (!valor) return "—";
+    return new Date(valor).toLocaleString();
   }
 </script>
 
@@ -33,19 +40,31 @@
   {:else if error}
     <p class="error-panel">⚠️ {error}</p>
   {:else if items.length === 0}
-    <p class="vacio-panel">Este usuario todavía no tiene cambios registrados.</p>
+    <p class="vacio-panel">
+      Este usuario todavía no tiene cambios registrados.
+    </p>
   {:else}
     <ul>
       {#each items as entrada (entrada.id)}
         <li>
           <div class="linea">
-            <span class="accion">{ETIQUETAS_ACCION[entrada.action] ?? entrada.action}</span>
+            <!-- Interpolacion de clases-->
+            <span
+              class="accion"
+              style:color={ETIQUETAS_ACCION[entrada.action]?.color}
+            >
+              {ETIQUETAS_ACCION[entrada.action]?.label ?? entrada.action}
+            </span>
             <span class="fecha">{formatoFecha(entrada.created_at)}</span>
           </div>
-          {#if entrada.action === 'status_change'}
-            <p class="detalle">{entrada.old_value ?? '—'} → {entrada.new_value ?? '—'}</p>
-          {:else if entrada.action === 'role_assigned' || entrada.action === 'role_revoked'}
-            <p class="detalle">Rol: {entrada.new_value ?? entrada.old_value ?? '—'}</p>
+          {#if entrada.action === "status_change"}
+            <p class="detalle">
+              {entrada.old_value ?? "—"} → {entrada.new_value ?? "—"}
+            </p>
+          {:else if entrada.action === "role_assigned" || entrada.action === "role_revoked"}
+            <p class="detalle">
+              {entrada.new_value ?? entrada.old_value ?? "—"}
+            </p>
           {/if}
           {#if entrada.reason}
             <p class="motivo">Motivo: “{entrada.reason}”</p>

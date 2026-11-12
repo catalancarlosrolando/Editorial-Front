@@ -2,12 +2,12 @@
 // (etapa D), del formulario crear/editar con selects en cascada (etapa E) y
 // del ciclo de vida con adjuntos (etapa F). Es el caso más complejo de
 // filtros hasta ahora: muchos parámetros recombinables + orden + tamaño de
-// página, el DETALLE EXPANDIBLE por fila (fetch GET /posts/{id} recién al
-// abrir la fila), el formulario con TRES cargas propias (canales del
-// usuario, medios por canal elegido y el guardado) y las TRANSICIONES de
-// estado que disparan las filas. Cada error tiene SU lugar:
+// página, el DETALLE EN DIÁLOGO (fetch GET /posts/{id} al abrirlo desde la
+// fila), el formulario con TRES cargas propias (canales del usuario, medios
+// por canal elegido y el guardado) y las TRANSICIONES de estado que disparan
+// las filas. Cada error tiene SU lugar:
 //   error             → carga del listado (pantalla completa, con Reintentar)
-//   errorDetalle      → carga del detalle expandido (dentro de la fila)
+//   errorDetalle      → carga del detalle (dentro del diálogo)
 //   errorCanales      → carga de los canales autorizados del formulario
 //   errorMedios       → carga de los medios de los canales elegidos
 //   erroresFormulario → 422 de validación, UNA entrada por campo
@@ -47,7 +47,7 @@ export function usePublicaciones() {
   // los conserva, así el paginado no "resetea" la búsqueda.
   let filtros = $state({})
 
-  // Detalle expandible: { resumen, datos }. 'resumen' es la fila del listado
+  // Detalle en diálogo: { resumen, datos }. 'resumen' es la fila del listado
   // (para pintar al instante) y 'datos' lo que responde GET /posts/{id}.
   let detalle = $state(null)
   let cargandoDetalle = $state(false)
@@ -57,8 +57,8 @@ export function usePublicaciones() {
   // rápido; la respuesta VIEJA no debe pisar a la nueva (patrón etapas A/C).
   let pedido = 0
 
-  // Guardia anti-carrera del detalle: se puede abrir la fila B mientras vuela
-  // el pedido de la fila A.
+  // Guardia anti-carrera del detalle: se puede pedir el detalle de la fila B
+  // mientras vuela el de la fila A (y cerrar el diálogo mientras vuela uno).
   let pedidoDetalle = 0
 
   // ── Etapa E: formulario crear/editar ──
@@ -158,14 +158,12 @@ export function usePublicaciones() {
     cargar(paginaActual, filtros)
   }
 
-  // Detalle expandible: si la fila pedida ya está abierta, se cierra; si no,
-  // se abre y consulta el backend (fuente de verdad, aunque el resumen del
-  // listado ya traiga relaciones). Devuelve nada: el estado queda en el hook.
-  async function alternarDetalle(post) {
-    if (detalle?.resumen?.id === post.id) {
-      detalle = null
-      return
-    }
+  // Detalle: consulta el backend para la fila pedida (fuente de verdad,
+  // aunque el resumen del listado ya traiga relaciones) y el estado queda
+  // en el hook; el DialogoPublicacion se muestra mientras haya detalle.
+  // Ya no alterna: cada llamada abre (o reintenta) el detalle de ese post.
+  // Devuelve nada: el estado queda en el hook.
+  async function abrirDetalle(post) {
     pedidoDetalle++
     const mio = pedidoDetalle
     detalle = { resumen: post, datos: null }
@@ -183,9 +181,11 @@ export function usePublicaciones() {
     }
   }
 
-  // Cierra el detalle sin importar cuál esté abierto (lo llama la página al
-  // filtrar o paginar: los datos de la fila podrían quedar viejos).
+  // Cierra el detalle (lo llama el diálogo al cerrar, y la página al filtrar
+  // o paginar: los datos podrían quedar viejos). El pedidoDetalle++ cancela
+  // cualquier carga en vuelo: su respuesta ya no pinta nada.
   function cerrarDetalle() {
+    pedidoDetalle++
     detalle = null
   }
 
@@ -343,7 +343,7 @@ export function usePublicaciones() {
         return false
       }
       mensaje = resultado.mensaje
-      // El post cambió de estado: el detalle expandido quedaría viejo y el
+      // El post cambió de estado: el detalle abierto quedaría viejo y el
       // listado hay que recargarlo para ver el badge nuevo.
       cerrarDetalle()
       await cargar(paginaActual, filtros)
@@ -463,7 +463,7 @@ export function usePublicaciones() {
     aplicarFiltros,
     cambiarPagina,
     reintentar,
-    alternarDetalle,
+    abrirDetalle,
     cerrarDetalle,
     cargarCanales,
     cargarMedios,

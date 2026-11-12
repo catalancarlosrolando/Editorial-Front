@@ -88,8 +88,17 @@
     }
   })
 
+  // Cambiar de página cierra el detalle: la fila ya no estaría en la cola
+  // visible y sus datos quedarían viejos.
   function cambiarPagina(pagina) {
+    moderacion.cerrarDetalle()
     moderacion.cambiarPagina(pagina)
+  }
+
+  // Reintentar el detalle fallido: reabre con el MISMO resumen (nuevo
+  // pedido, mismos estados de carga/error del hook).
+  function reintentarDetalle() {
+    moderacion.abrirDetalle(moderacion.detalle.resumen)
   }
 </script>
 
@@ -132,6 +141,12 @@
       </p>
       <ModeracionListado
         items={moderacion.items}
+        detalle={moderacion.detalle}
+        cargandoDetalle={moderacion.cargandoDetalle}
+        errorDetalle={moderacion.errorDetalle}
+        onVerDetalle={moderacion.abrirDetalle}
+        onCerrarDetalle={moderacion.cerrarDetalle}
+        onReintentarDetalle={reintentarDetalle}
         acciones={accionesDe}
         ocupado={moderacion.idOperando !== null}
       />
