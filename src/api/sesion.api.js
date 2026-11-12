@@ -50,3 +50,69 @@ export async function logout(token) {
   if (res.status === 401) throw new Error('SESION_INVALIDA')
   if (!res.ok) throw new Error('HTTP ' + res.status)
 }
+
+// Registra un nuevo usuario:
+// Endpoint: POST /api/register
+// Headers: Content-Type: application/json, Accept: application/json
+// Devuelve { user, token, mensaje } si responde 201/200,
+// o { errores, mensaje } si responde 422 (errores de validación).
+export async function register(datos) {
+  const res = await fetch(`${BASE_URL}/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+      first_name: datos.first_name,
+      last_name: datos.last_name,
+      name: datos.name,
+      email: datos.email,
+      password: datos.password,
+      password_confirmation: datos.password_confirmation
+    })
+  })
+
+  if (res.status === 401) throw new Error('SESION_INVALIDA')
+  const cuerpo = await res.json().catch(() => ({}))
+
+  if (res.status === 422) {
+    return { errores: cuerpo.errors ?? {}, mensaje: cuerpo.message }
+  }
+
+  if (!res.ok) throw new Error(cuerpo.message ?? 'HTTP ' + res.status)
+
+  const info = cuerpo.data ?? cuerpo
+  return {
+    user: info.user ?? cuerpo.user,
+    token: info.token ?? cuerpo.token,
+    mensaje: cuerpo.message ?? 'Usuario registrado con éxito'
+  }
+}
+
+// Reenvía el email de verificación:
+// Endpoint: POST /api/email/resend
+// Headers: Authorization: Bearer <token>, Accept: application/json
+export async function reenviarEmailVerificacion(token) {
+  const res = await fetch(`${BASE_URL}/email/resend`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer ' + token
+    }
+  })
+
+  if (res.status === 401) throw new Error('SESION_INVALIDA')
+  const cuerpo = await res.json().catch(() => ({}))
+
+  if (res.status === 422) {
+    return { errores: cuerpo.errors ?? {}, mensaje: cuerpo.message }
+  }
+
+  if (!res.ok) throw new Error(cuerpo.message ?? 'HTTP ' + res.status)
+
+  return { mensaje: cuerpo.message ?? 'Correo de verificación reenviado.' }
+}
+
+export { register as registrar, reenviarEmailVerificacion as resendVerificationEmail }
+

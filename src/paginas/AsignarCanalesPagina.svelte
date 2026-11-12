@@ -1,17 +1,21 @@
 <script>
-  import { fade } from 'svelte/transition'
-  import { navigate } from '../router.js'
-  import { sesion } from '../sesion.svelte.js'
-  import { navegacion } from '../navegacion.svelte.js'
-  import { useAsignaciones } from '../hooks/useAsignaciones.svelte.js'
-  import { listarTodos as listarDispositivos } from '../api/dispositivos.api.js'
-  import { listar as listarCanales } from '../api/canales.api.js'
-  import { canalesDeDispositivo, asignarCanales, desasignarCanales } from '../api/asignaciones.api.js'
-  import Seleccion from '../componentes/comunes/Seleccion.svelte'
-  import Spinner from '../componentes/comunes/Spinner.svelte'
-  import MensajeError from '../componentes/comunes/MensajeError.svelte'
-  import Vacio from '../componentes/comunes/Vacio.svelte'
-  import TransferList from '../componentes/comunes/TransferList.svelte'
+  import { fade } from "svelte/transition";
+  import { navigate } from "../router.js";
+  import { sesion } from "../sesion.svelte.js";
+  import { navegacion } from "../navegacion.svelte.js";
+  import { useAsignaciones } from "../hooks/useAsignaciones.svelte.js";
+  import { listarTodos as listarDispositivos } from "../api/dispositivos.api.js";
+  import { listar as listarCanales } from "../api/canales.api.js";
+  import {
+    canalesDeDispositivo,
+    asignarCanales,
+    desasignarCanales,
+  } from "../api/asignaciones.api.js";
+  import Seleccion from "../componentes/comunes/Seleccion.svelte";
+  import Spinner from "../componentes/comunes/Spinner.svelte";
+  import MensajeError from "../componentes/comunes/MensajeError.svelte";
+  import Vacio from "../componentes/comunes/Vacio.svelte";
+  import TransferList from "../componentes/comunes/TransferList.svelte";
 
   // El mismo hook que usa /asignar-medios; acá se elige un dispositivo y
   // sobre él se agregan o quitan canales.
@@ -20,31 +24,34 @@
     cargarFuente: listarCanales,
     cargarAsignadas: canalesDeDispositivo,
     asociar: asignarCanales,
-    desasociar: desasignarCanales
-  })
+    desasociar: desasignarCanales,
+  });
 
   // El <select> escribe acá con bind:value; el $effect de abajo reacciona.
-  let dispositivoElegido = $state('')
+  let dispositivoElegido = $state("");
 
   $effect(() => {
     if (!sesion.token) {
-      navigate('/login')
-      return
+      navigate("/login");
+      return;
     }
-    navegacion.seccion = '/asignar-canales'
-    asignacion.cargarInicio()
-  })
+    navegacion.seccion = "/asignar-canales";
+    asignacion.cargarInicio();
+  });
 
   // Select dependiente: cada dispositivo elegido dispara la carga de sus canales.
   $effect(() => {
-    asignacion.elegir(dispositivoElegido)
-  })
+    asignacion.elegir(dispositivoElegido);
+  });
 
   // El <select> espera opciones { value, label }: el nombre visible de un
   // dispositivo es su uid (el backend no le da nombre, RN-D01).
   const opcionesSelector = $derived(
-    asignacion.opciones.map((dispositivo) => ({ value: dispositivo.id, label: dispositivo.uid }))
-  )
+    asignacion.opciones.map((dispositivo) => ({
+      value: dispositivo.id,
+      label: dispositivo.uid,
+    })),
+  );
 </script>
 
 <svelte:head>
@@ -61,9 +68,14 @@
       <Spinner />
     </div>
   {:else if asignacion.error}
-    <MensajeError mensaje={asignacion.error} onReintentar={asignacion.cargarInicio} />
+    <MensajeError
+      mensaje={asignacion.error}
+      onReintentar={asignacion.cargarInicio}
+    />
   {:else if asignacion.opciones.length === 0}
-    <Vacio mensaje="No hay dispositivos todavía. Creá uno en la sección Dispositivos para poder asignarle canales." />
+    <Vacio
+      mensaje="No hay dispositivos todavía. Creá uno en la sección Dispositivos para poder asignarle canales."
+    />
   {:else}
     <div class="tarjeta eleccion">
       <Seleccion

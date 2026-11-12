@@ -77,10 +77,36 @@
     <Boton tipo="submit" deshabilitado={enviando}>
       {enviando ? 'Ingresando…' : 'Ingresar'}
     </Boton>
+    <div class="pie-enlace">
+      <span>¿No tenés una cuenta?</span>
+      <a href="/register" onclick={(e) => { e.preventDefault(); navigate('/register'); }}>
+        Registrate acá
+      </a>
+    </div>
   </form>
 </div>
 
 <style>
+  .pie-enlace {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+    color: var(--color-texto-suave);
+    margin-top: 0.5rem;
+  }
+
+  .pie-enlace a {
+    color: var(--color-primario);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .pie-enlace a:hover {
+    text-decoration: underline;
+  }
+
   .fondo {
     min-height: 100vh;
     display: flex;
